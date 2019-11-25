@@ -2,15 +2,11 @@ import os,sys
 import numpy as np
 sys.path.insert(0, 'fair_classification/') # the code for fair classification is in this directory
 import utils as ut
-import loss_funcs as lf # loss funcs that can be optimized subject to various constraints
-
-
 from urllib.request import urlopen
-sys.path.insert(0, '../fair_classification/') # the code for fair classification is in this directory
 from random import seed, shuffle
-SEED = 1122334455
-seed(SEED) # set the random seed so that the random permutations can be reproduced again
-np.random.seed(SEED)
+#SEED = 1122334455
+#seed(SEED) # set the random seed so that the random permutations can be reproduced again
+#np.random.seed(SEED)
 
 
 
@@ -52,6 +48,7 @@ def load_adult_data(load_data_size=None):
     sensitive_attrs = ['sex'] # the fairness constraints will be used for this feature
     attrs_to_ignore = ['sex', 'race' ,'fnlwgt'] # sex and race are sensitive feature so we will not use them in classification, we will not consider fnlwght for classification since its computed externally and it highly predictive for the class (for details, see documentation of the adult data)
     attrs_for_classification = set(attrs) - set(attrs_to_ignore)
+    print(attrs_for_classification)
 
     # adult data comes in two different files, one for training and one for testing, however, we will combine data from both the files
     data_files = ["adult.data", "adult.test"]
@@ -174,6 +171,8 @@ def main():
     """ Load the adult data """
     X, y, x_control = load_adult_data(load_data_size=None)  # set the argument to none, or no arguments if you want to test with the whole data -- we are subsampling for performance speedup
     ut.compute_p_rule(x_control["sex"], y)  # compute the p-rule in the original data
+    data = np.hstack((X,np.reshape(y, (-1, 1)),np.reshape(x_control['sex'], (-1,1))))
+    np.savetxt("data/adult-cleaned.dat", data, fmt='%d')
 
 
 if __name__ == '__main__':
