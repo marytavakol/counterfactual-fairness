@@ -7,7 +7,8 @@ from random import seed, shuffle
 #SEED = 1122334455
 #seed(SEED) # set the random seed so that the random permutations can be reproduced again
 #np.random.seed(SEED)
-
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 
 
 
@@ -170,9 +171,11 @@ def load_adult_data(load_data_size=None):
 def main():
     """ Load the adult data """
     X, y, x_control = load_adult_data(load_data_size=None)  # set the argument to none, or no arguments if you want to test with the whole data -- we are subsampling for performance speedup
+    #X_norm = MinMaxScaler().fit_transform(X)
+    X_norm = StandardScaler().fit_transform(X)
     ut.compute_p_rule(x_control["sex"], y)  # compute the p-rule in the original data
-    data = np.hstack((X, np.reshape(x_control['sex'], (-1,1)), np.reshape(y, (-1, 1))))
-    np.savetxt("data/adult-cleaned.dat", data, fmt='%d')
+    data = np.hstack((X_norm, np.reshape(x_control['sex'], (-1,1)), np.reshape(y, (-1, 1))))
+    np.savetxt("data/adult-cleaned.dat", data, fmt='%1.3f')
 
 
 if __name__ == '__main__':

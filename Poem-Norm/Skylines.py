@@ -9,7 +9,7 @@ import sklearn.multiclass
 import sklearn.svm
 import sys
 import time
-import math
+import utils as ut
 
 
 class Skylines:
@@ -87,15 +87,17 @@ class Skylines:
 
     def test(self):
         predictedLabels = self.generatePredictions(self.labeler)
-        print("Mary: ", sum(predictedLabels))
-        numLabels = numpy.shape(self.dataset.testLabels)[1]
-        predictionError = sklearn.metrics.hamming_loss(self.dataset.testLabels,
-            predictedLabels) * numLabels
+        test_score, correct_answers_test = ut.check_accuracy(self.dataset.testFeatures, self.dataset.testLabels, predictedLabels)
+        print("accuracy: ", test_score)
 
-        if self.verbose:
-            print(self.Name," Test. Performance: ", predictionError)
-            sys.stdout.flush()
-        return predictionError 
+        # numLabels = numpy.shape(self.dataset.testLabels)[1]
+        # predictionError = sklearn.metrics.hamming_loss(self.dataset.testLabels,
+        #     predictedLabels) * numLabels
+
+        # if self.verbose:
+        #     print(self.Name," Test. Performance: ", predictionError)
+        #     sys.stdout.flush()
+        return test_score
 
     def expectedTestLoss(self):
         predictionError = None
@@ -154,7 +156,7 @@ class SVM(Skylines):
         return predictionError, multilabelClassifier, diagnostic, diagnostic
 
     def generatePredictions(self, classifier):
-        return classifier.predict(self.dataset.testFeatures)
+        return classifier.predict(self.dataset.trainFeatures)
 
 
 class CRF(Skylines):
@@ -173,8 +175,8 @@ class CRF(Skylines):
         for i in range(numLabels):
             currLabels = self.dataset.trainLabels[:, i]
             if currLabels.sum() > 0:        #Avoid training labels with no positive instances
-                logitRegressor = sklearn.linear_model.LogisticRegression(C = param,
-                    penalty = 'l2', tol = self.tol, dual = True, fit_intercept = False)
+                logitRegressor = sklearn.linear_model.LogisticRegression(solver='liblinear', C = param,
+                    penalty = 'l2', tol = self.tol, dual = True, fit_intercept = False, max_iter=100)
                 logitRegressor.fit(self.dataset.trainFeatures, currLabels)
                 regressors.append(logitRegressor)
                 if reportValidationResult:

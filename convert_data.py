@@ -40,7 +40,7 @@ if __name__ == '__main__':
         subsampled_dataset.trainFeatures = features
         subsampled_dataset.trainLabels = labels
         logger = Logger.Logger(subsampled_dataset, loggerC = -1, stochasticMultiplier = 1, verbose = False)
-        logger.crf.test()
+        print("logger performance: ", logger.crf.test())
 
         replayed_dataset = DatasetReader.DatasetReader(copy_dataset = dataset, verbose = False)
 
