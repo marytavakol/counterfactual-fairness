@@ -41,12 +41,12 @@ class DatasetReader:
             del self.testFeatures
             del self.testLabels
             if self.verbose:
-                print "DatasetReader: [Message] Freed matrices"
+                print("DatasetReader: [Message] Freed matrices")
                 sys.stdout.flush()
 
     def reduceDimensionality(self, numDims):
         if (self.trainFeatures is None) and self.verbose:
-            print "DatasetReader: [Error] No training data loaded."
+            print("DatasetReader: [Error] No training data loaded.")
             sys.stdout.flush()
             return
         LSAdecomp = sklearn.decomposition.TruncatedSVD(n_components = numDims, algorithm = 'arpack')
@@ -56,8 +56,8 @@ class DatasetReader:
         self.testFeatures = LSAdecomp.transform(self.testFeatures)
 
         if self.verbose:
-            print "DatasetReader: [Message] Features now have shape: Train:",\
-                    numpy.shape(self.trainFeatures), "Test:", numpy.shape(self.testFeatures)
+            print("DatasetReader: [Message] Features now have shape: Train:",\
+                    numpy.shape(self.trainFeatures), "Test:", numpy.shape(self.testFeatures))
             sys.stdout.flush()
 
     def sanitizeLabels(self, labelList):
@@ -69,50 +69,42 @@ class DatasetReader:
                 returnList.append(tup)
         return returnList
 
-    def loadDataset(self, corpusName, labelSubset = None):
-        trainFilename = '../DATA/%s_train.svm' % corpusName
-        testFilename = '../DATA/%s_test.svm' % corpusName
-        if (not os.path.isfile(trainFilename)) or (not os.path.isfile(testFilename)):
-            print "DatasetReader: [Error] Invalid corpus name ", trainFilename, testFilename
+    def loadDataset(self, filename):
+        if (not os.path.isfile(filename)):
+            print("DatasetReader: [Error] Invalid corpus name ", filename)
             sys.stdout.flush()
             return
-        labelTransform = sklearn.preprocessing.MultiLabelBinarizer(sparse_output = False)
 
-        train_features, train_labels = sklearn.datasets.load_svmlight_file(trainFilename, 
-            dtype = numpy.longdouble, multilabel = True)
-        sanitized_train_labels = self.sanitizeLabels(train_labels)
+        all_data = numpy.loadtxt(filename)
+        train_data , test_data = sklearn.model_selection.train_test_split(all_data, shuffle=True, test_size=0.2)
+
+        train_features = train_data[:, :-1]
+        self.trainLabels = numpy.reshape(train_data[:, -1], (-1, 1))
+        self.trainLabels[self.trainLabels < 0] = 0
         
         numSamples, numFeatures = numpy.shape(train_features)
 
         biasFeatures = scipy.sparse.csr_matrix(numpy.ones((numSamples, 1),
             dtype = numpy.longdouble), dtype = numpy.longdouble)
 
-        self.trainFeatures = scipy.sparse.hstack([train_features, biasFeatures], dtype = numpy.longdouble)
+        self.trainFeatures = scipy.sparse.hstack([biasFeatures, train_features], dtype = numpy.longdouble)
         self.trainFeatures = self.trainFeatures.tocsr()
 
-        test_features, test_labels = sklearn.datasets.load_svmlight_file(testFilename,
-            n_features = numFeatures, dtype = numpy.longdouble, multilabel = True)        
-        sanitized_test_labels = self.sanitizeLabels(test_labels)
+        test_features = test_data[:, :-1]
+        self.testLabels = numpy.reshape(test_data[:, -1], (-1, 1))
+        self.testLabels[self.testLabels < 0] = 0
 
         numSamples, numFeatures = numpy.shape(test_features)
 
         biasFeatures = scipy.sparse.csr_matrix(numpy.ones((numSamples, 1),
             dtype = numpy.longdouble), dtype = numpy.longdouble)
-        self.testFeatures = scipy.sparse.hstack([test_features, biasFeatures], dtype = numpy.longdouble)
+        self.testFeatures = scipy.sparse.hstack([biasFeatures, test_features], dtype = numpy.longdouble)
         self.testFeatures = self.testFeatures.tocsr()
 
-        self.testLabels = labelTransform.fit_transform(sanitized_test_labels)
-        if labelSubset is not None:
-            self.testLabels = self.testLabels[:, labelSubset]
-
-        self.trainLabels = labelTransform.transform(sanitized_train_labels)
-        if labelSubset is not None:
-            self.trainLabels = self.trainLabels[:, labelSubset]
-
         if self.verbose:
-            print "DatasetReader: [Message] Loaded ", corpusName, " [p, q, n_train, n_test]: ",\
+            print("DatasetReader: [Message] Loaded ", filename, " [p, q, n_train, n_test]: ",\
                 numpy.shape(self.trainFeatures)[1], numpy.shape(self.trainLabels)[1],\
-                numpy.shape(self.trainLabels)[0], numpy.shape(self.testFeatures)[0]
+                numpy.shape(self.trainFeatures)[0], numpy.shape(self.testFeatures)[0])
             sys.stdout.flush()
 
 
@@ -129,17 +121,17 @@ class SupervisedDataset(DatasetReader):
             del self.validateLabels
 
         if self.verbose:
-            print "SupervisedDataset: [Message] Freed matrices"
+            print("SupervisedDataset: [Message] Freed matrices")
             sys.stdout.flush()
 
     def createTrainValidateSplit(self, validateFrac):
         self.trainFeatures, self.validateFeatures, self.trainLabels, self.validateLabels = \
-            sklearn.cross_validation.train_test_split(self.trainFeatures, self.trainLabels,
-                test_size = validateFrac, dtype = numpy.longdouble)
+            sklearn.model_selection.train_test_split(self.trainFeatures, self.trainLabels,
+                test_size = validateFrac)
 
         if self.verbose:
-            print "SupervisedDataset: [Message] Created supervised split [n_train, n_validate]: ",\
-            numpy.shape(self.trainFeatures)[0], numpy.shape(self.validateFeatures)[0]
+            print("SupervisedDataset: [Message] Created supervised split [n_train, n_validate]: ",\
+            numpy.shape(self.trainFeatures)[0], numpy.shape(self.validateFeatures)[0])
             sys.stdout.flush()
 
 
@@ -177,7 +169,7 @@ class BanditDataset(DatasetReader):
             del self.validateSampledLoss
 
         if self.verbose:
-            print "BanditDataset: [Message] Freed matrices"
+            print("BanditDataset: [Message] Freed matrices")
             sys.stdout.flush()
 
     def registerSampledData(self, sampledLabels, sampledLogPropensity, sampledLoss):
@@ -186,18 +178,18 @@ class BanditDataset(DatasetReader):
         self.sampledLoss = sampledLoss
 
         if self.verbose:
-            print "BanditDataset: [Message] Registered bandit samples [n_samples]: ", numpy.shape(sampledLogPropensity)[0]
+            print("BanditDataset: [Message] Registered bandit samples [n_samples]: ", numpy.shape(sampledLogPropensity)[0])
             sys.stdout.flush()
 
     def createTrainValidateSplit(self, validateFrac):
         self.trainFeatures, self.validateFeatures, self.trainLabels, self.validateLabels, \
         self.trainSampledLabels, self.validateSampledLabels, self.trainSampledLogPropensity, self.validateSampledLogPropensity, \
-        self.trainSampledLoss, self.validateSampledLoss = sklearn.cross_validation.train_test_split(self.trainFeatures,
+        self.trainSampledLoss, self.validateSampledLoss = sklearn.model_selection.train_test_split(self.trainFeatures,
                                                             self.trainLabels, self.sampledLabels, self.sampledLogPropensity,
-                                                            self.sampledLoss, test_size = validateFrac, dtype = numpy.longdouble)
+                                                            self.sampledLoss, test_size = validateFrac)
 
         if self.verbose:
-            print "BanditDataset: [Message] Created bandit split [n_train, n_validate]:",\
-                numpy.shape(self.trainFeatures)[0], numpy.shape(self.validateFeatures)[0]
+            print("BanditDataset: [Message] Created bandit split [n_train, n_validate]:",\
+                numpy.shape(self.trainFeatures)[0], numpy.shape(self.validateFeatures)[0])
             sys.stdout.flush()
 

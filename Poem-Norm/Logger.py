@@ -5,7 +5,7 @@ import numpy.random
 import scipy.sparse
 import Skylines
 import sys
-
+import utils as ut
 
 class DataStream:
     def __init__(self, dataset, verbose):
@@ -20,7 +20,7 @@ class DataStream:
         self.permutedLabels = self.originalLabels[permute, :]
 
         if self.verbose:
-            print "DataStream: [Message] Initialized with permutation over [n_samples]: ", numSamples
+            print("DataStream: [Message] Initialized with permutation over [n_samples]: ", numSamples)
             sys.stdout.flush()
 
     def generateStream(self, subsampleFrac, replayCount):
@@ -29,7 +29,7 @@ class DataStream:
         subsampleFeatures = self.permutedFeatures[0:numSubsamples,:]
         subsampleLabels = self.permutedLabels[0:numSubsamples,:]
         if self.verbose:
-            print "DataStream: [Message] Selected subsamples [n_subsamples, n_samples]: ", numSubsamples, numSamples
+            print("DataStream: [Message] Selected subsamples [n_subsamples, n_samples]: ", numSubsamples, numSamples)
             sys.stdout.flush()
 
         if replayCount <= 1: 
@@ -40,7 +40,7 @@ class DataStream:
             repeatedLabels = numpy.kron(replicator, subsampleLabels)
 
             if self.verbose:
-                print "DataStream: [Message] Replay samples ", numpy.shape(repeatedFeatures)[0]
+                print("DataStream: [Message] Replay samples ", numpy.shape(repeatedFeatures)[0])
                 sys.stdout.flush()
             return repeatedFeatures, repeatedLabels
 
@@ -51,7 +51,7 @@ class DataStream:
         del self.permutedLabels
         
         if self.verbose:
-            print "Datastream: [Message] Freed matrices"
+            print("Datastream: [Message] Freed matrices")
             sys.stdout.flush()
 
 
@@ -68,40 +68,44 @@ class Logger:
 
         self.crf = crf
         if self.verbose:
-            print "Logger: [Message] Trained logger crf. Weight-scale: ", stochasticMultiplier
+            print("Logger: [Message] Trained logger crf. Weight-scale: ", stochasticMultiplier)
             sys.stdout.flush()
 
     def freeAuxiliaryMatrices(self):
         del self.crf
 
+
+
+
     def generateLog(self, dataset):
         numSamples, numFeatures = numpy.shape(dataset.trainFeatures)
         numLabels = numpy.shape(dataset.trainLabels)[1]
 
-        sampledLabels = numpy.zeros((numSamples, numLabels), dtype = numpy.int)
+        sampledLabels = dataset.trainLabels
         logpropensity = numpy.zeros(numSamples, dtype = numpy.longdouble)
-        for i in xrange(numLabels):
+        for i in range(numLabels):
             if self.crf.labeler[i] is not None:
                 regressor = self.crf.labeler[i]
                 predictedProbabilities = regressor.predict_log_proba(dataset.trainFeatures)
 
-                randomThresholds = numpy.log(numpy.random.rand(numSamples).astype(numpy.longdouble))
-                sampledLabel = randomThresholds > predictedProbabilities[:,0]
-                sampledLabels[:, i] = sampledLabel.astype(int)
-
                 probSampledLabel = numpy.zeros(numSamples, dtype=numpy.longdouble)
-                probSampledLabel[sampledLabel] = predictedProbabilities[sampledLabel, 1]
-                remainingLabel = numpy.logical_not(sampledLabel)
-                probSampledLabel[remainingLabel] = predictedProbabilities[remainingLabel, 0]
+                probSampledLabel[sampledLabels[:, 0] > 0] = predictedProbabilities[sampledLabels[:, 0] > 0, 1]
+                probSampledLabel[sampledLabels[:, 0] < 1] = predictedProbabilities[sampledLabels[:, 0] < 1, 0]
                 logpropensity = logpropensity + probSampledLabel
 
-        diffLabels = sampledLabels != dataset.trainLabels
-        sampledLoss = diffLabels.sum(axis = 1, dtype = numpy.longdouble) - numLabels
+        x_control = dataset.trainFeatures[:, -1].todense()
+        prot_prob, non_prot_prob = ut.compute_imbalance(x_control, dataset.trainLabels)
+        sampledLoss = numpy.zeros(numSamples)-1
+        rand = numpy.random.rand(numSamples, 1)
+        non_prot_ind = numpy.where((x_control == 1.0) & (dataset.trainLabels == 1.0) & (rand < non_prot_prob))[0]
+        prot_ind = numpy.where((x_control == 0.0) & (dataset.trainLabels == 0.0) & (rand < prot_prob))[0]
+        sampledLoss[prot_ind] = 0
+        sampledLoss[non_prot_ind] = 0
 
         if self.verbose:
             averageSampledLoss = sampledLoss.mean(dtype = numpy.longdouble)
-            print "Logger: [Message] Sampled historical logs. [Mean train loss, numSamples]:", averageSampledLoss, numpy.shape(sampledLabels)[0]
-            print "Logger: [Message] [min, max, mean] inv propensity", logpropensity.min(), logpropensity.max(), logpropensity.mean()
+            print("Logger: [Message] Sampled historical logs. [Mean train loss, numSamples]:", averageSampledLoss, numpy.shape(sampledLabels)[0])
+            print("Logger: [Message] [min, max, mean] inv propensity", logpropensity.min(), logpropensity.max(), logpropensity.mean())
             sys.stdout.flush()
         return sampledLabels, logpropensity, sampledLoss
 

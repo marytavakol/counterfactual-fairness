@@ -31,7 +31,7 @@ class MajorizeISEstimator(PRM.VanillaISEstimator):
         logImportanceSampleWeights[mask] = self.clip
 
         if self.verbose:
-            print "MajorizeISEstimator: [Debug] C=", mask.sum()
+            print("MajorizeISEstimator: [Debug] C=", mask.sum())
             sys.stdout.flush()
 
         ImportanceSampleWeights = numpy.exp(logImportanceSampleWeights)
@@ -212,7 +212,7 @@ class MajorizeStochasticEstimator(MajorizeISEstimator):
         logImportanceSampleWeights[mask] = self.clip
 
         if self.verbose:
-            print "MajorizeStochasticEstimator: [Debug] C=", mask.sum()
+            print("MajorizeStochasticEstimator: [Debug] C=", mask.sum())
             sys.stdout.flush()
 
         ImportanceSampleWeights = numpy.exp(logImportanceSampleWeights)
@@ -273,7 +273,7 @@ class MajorizeStochasticEstimator(MajorizeISEstimator):
                 batchNum += 1
                 if (batchNum >= self.n_iter):
                     if self.verbose:
-                        print "MajorizeStochasticEstimator: [Message] Reached max iterations."
+                        print("MajorizeStochasticEstimator: [Message] Reached max iterations.")
                         sys.stdout.flush()
                     detectedConvergence = True
                     break
@@ -297,12 +297,12 @@ class MajorizeStochasticEstimator(MajorizeISEstimator):
                         (batchNum >= self.min_iter)):
                     detectedConvergence = True
                     if self.verbose:
-                        print "MajorizeStochasticEstimator: [Message] Gradient close to 0."
+                        print("MajorizeStochasticEstimator: [Message] Gradient close to 0.")
                         sys.stdout.flush()
                     break
 
                 if self.verbose:
-                    print "MajorizeStochasticEstimator: [Debug] [coef_norm, grad_norm]: ", scipy.linalg.norm(coef), scipy.linalg.norm(Grad)
+                    print("MajorizeStochasticEstimator: [Debug] [coef_norm, grad_norm]: ", scipy.linalg.norm(coef), scipy.linalg.norm(Grad))
                     sys.stdout.flush()
 
                 currMean += u_w
@@ -314,12 +314,12 @@ class MajorizeStochasticEstimator(MajorizeISEstimator):
                         patience = 0
                     elif (currMean >= (prevMean + self.tol)) and (batchNum >= self.min_iter):
                         if self.verbose:
-                            print "MajorizeStochasticEstimator: [Debug] Progressive validation [prev, curr]: ", prevMean, currMean
+                            print("MajorizeStochasticEstimator: [Debug] Progressive validation [prev, curr]: ", prevMean, currMean)
                             sys.stdout.flush()
                         patience += 1
                         if patience >= 5:
                             if self.verbose:
-                                print "MajorizeStochasticEstimator: [Message] Ran out of patience during progressive validation. Reverting."
+                                print("MajorizeStochasticEstimator: [Message] Ran out of patience during progressive validation. Reverting.")
                                 sys.stdout.flush()
                             detectedConvergence = True
                             coef = snapshot_coef.copy()
@@ -347,7 +347,7 @@ class MajorizeStochasticEstimator(MajorizeISEstimator):
         self.coef_ = best_coef
 
         if self.verbose:
-            print "MajorizeStochasticEstimator: [Message] Finished optimization ", best_val
+            print("MajorizeStochasticEstimator: [Message] Finished optimization ", best_val)
             sys.stdout.flush()
 
         """

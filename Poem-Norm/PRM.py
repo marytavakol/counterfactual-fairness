@@ -45,7 +45,7 @@ class MultiLabelEstimator(PRMEstimator):
         numLabels = numpy.shape(self.y)[1]
 
         if self.verbose:
-            print "MultiLabelEstimator: [Message] Loaded matrices"
+            print("MultiLabelEstimator: [Message] Loaded matrices")
             sys.stdout.flush()
 
     def freeAuxiliaryMatrices(self):
@@ -57,16 +57,16 @@ class MultiLabelEstimator(PRMEstimator):
             del self.X
             del self.Xtranspose
             if self.verbose:
-                print "MultiLabelEstimator: [Message] Freed matrices"
+                print("MultiLabelEstimator: [Message] Freed matrices")
                 sys.stdout.flush()
 
     def checkGradient(self):
         numLabels = numpy.shape(self.y)[1]
         numFeatures = numpy.shape(self.X)[1]
 
-        for i in xrange(10):
+        for i in range(10):
             startW = 10*numpy.random.randn(numFeatures*numLabels)
-            print "MultiLabelEstimator: [Message] CheckGradient ", scipy.optimize.check_grad(self.ObjectiveOnly, self.GradientOnly, startW)
+            print("MultiLabelEstimator: [Message] CheckGradient ", scipy.optimize.check_grad(self.ObjectiveOnly, self.GradientOnly, startW))
             sys.stdout.flush()
 
     def fit(self, start_point):
@@ -86,7 +86,7 @@ class MultiLabelEstimator(PRMEstimator):
                     method = 'L-BFGS-B', jac = True, tol = self.tol, options = ops)
 
         if self.verbose:
-            print "MultiLabelEstimator: [Message] Finished optimization ", Result['message']
+            print("MultiLabelEstimator: [Message] Finished optimization ", Result['message'])
             sys.stdout.flush()
 
         self.coef_ = Result['x']
@@ -135,7 +135,7 @@ class MultiLabelEstimator(PRMEstimator):
         logImportanceSampleWeights[mask] = self.clip
 
         if self.verbose:
-            print "MultiLabelEstimator: [Debug] Fit Diagnostic C=", mask.sum()
+            print("MultiLabelEstimator: [Debug] Fit Diagnostic C=", mask.sum())
             sys.stdout.flush()
 
         ImportanceSampleWeights = numpy.exp(logImportanceSampleWeights)
@@ -222,7 +222,7 @@ class VanillaISEstimator(MultiLabelEstimator):
         logImportanceSampleWeights[mask] = self.clip
 
         if self.verbose:
-            print "VanillaISEstimator: [Debug] C=", mask.sum()
+            print("VanillaISEstimator: [Debug] C=", mask.sum())
             sys.stdout.flush()
 
         ImportanceSampleWeights = numpy.exp(logImportanceSampleWeights)
@@ -269,7 +269,7 @@ class VanillaISEstimator(MultiLabelEstimator):
             self.varpenalty * numpy.reshape(VarGrad, numFeatures*numLabels)
 
         if self.verbose:
-            print ".",
+            print(".",)
             sys.stdout.flush()
        
         return (Obj, Grad.astype(numpy.float_))
@@ -307,7 +307,7 @@ class SelfNormalEstimator(MultiLabelEstimator):
         logImportanceSampleWeights[mask] = self.clip
 
         if self.verbose:
-            print "VanillaISEstimator: [Debug] C=", mask.sum()
+            print("VanillaISEstimator: [Debug] C=", mask.sum())
             sys.stdout.flush()
 
         ImportanceSampleWeights = numpy.exp(logImportanceSampleWeights)
@@ -378,7 +378,7 @@ class SelfNormalEstimator(MultiLabelEstimator):
             self.varpenalty * numpy.reshape(VarGrad, numFeatures*numLabels)
 
         if self.verbose:
-            print "*",
+            print("*",)
             sys.stdout.flush()
 
         return (Obj, Grad.astype(numpy.float_))

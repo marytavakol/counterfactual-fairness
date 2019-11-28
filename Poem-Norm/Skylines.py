@@ -2,7 +2,7 @@ import MajorizePRM
 import numpy
 import PRM
 import scipy.linalg
-import sklearn.grid_search
+from sklearn.model_selection import ParameterGrid
 import sklearn.linear_model
 import sklearn.metrics
 import sklearn.multiclass
@@ -27,7 +27,7 @@ class Skylines:
             del self.labeler
         del self.dataset
         if self.verbose:
-            print "Skylines: [Message] Freed matrices"
+            print("Skylines: [Message] Freed matrices")
             sys.stdout.flush()
 
     def parallelValidate(self, param, reportValidationResult):
@@ -66,11 +66,11 @@ class Skylines:
             if len(self.params) > 1:
                 predictionError = predictionError * numLabels
                 if self.verbose:
-                    print self.Name, " Validation. Parameter = ", param, " ClippedDiagnostic: ", clippedDiagnostic,\
-                            " UnclippedDiagnostic: ", unclippedDiagnostic, " Performance: ", predictionError
+                    print(self.Name, " Validation. Parameter = ", param, " ClippedDiagnostic: ", clippedDiagnostic,\
+                            " UnclippedDiagnostic: ", unclippedDiagnostic, " Performance: ", predictionError)
                     sys.stdout.flush()
            
-            if (bestPerformance > predictionError) or (bestPerformance is None):
+            if (bestPerformance is None) or (bestPerformance > predictionError):
                 bestPerformance = predictionError
                 bestClassifier = classifier
                 bestParam = param
@@ -78,8 +78,8 @@ class Skylines:
                 bestUnclippedDiagnostic = unclippedDiagnostic
 
         if self.verbose:
-            print self.Name, " Best. Parameter = ", bestParam, "Time: ", avg_time,\
-                " ClippedDiagnostic: ", bestClippedDiagnostic, "UnclippedDiagnostic: ", bestUnclippedDiagnostic, " Performance: ", bestPerformance
+            print(self.Name, " Best. Parameter = ", bestParam, "Time: ", avg_time,\
+                " ClippedDiagnostic: ", bestClippedDiagnostic, "UnclippedDiagnostic: ", bestUnclippedDiagnostic, " Performance: ", bestPerformance)
             sys.stdout.flush()
 
         self.labeler = bestClassifier
@@ -92,7 +92,7 @@ class Skylines:
             predictedLabels) * numLabels
 
         if self.verbose:
-            print self.Name," Test. Performance: ", predictionError
+            print(self.Name," Test. Performance: ", predictionError)
             sys.stdout.flush()
         return predictionError 
 
@@ -107,26 +107,26 @@ class Skylines:
             predictor = PRM.VanillaISEstimator(n_iter = 0, tol = 0, l2reg = 0,
                 varpenalty = 0, clip = 1, verbose = False)
             predictor.coef_ = numpy.zeros((numFeatures,numLabels), dtype = numpy.longdouble)
-            for i in xrange(numLabels):
+            for i in range(numLabels):
                 if self.labeler[i] is not None:
                     predictor.coef_[:,i] = self.labeler[i].coef_
 
             if self.verbose:
-                print "wNorm", scipy.linalg.norm(predictor.coef_)
+                print("wNorm", scipy.linalg.norm(predictor.coef_))
                 sys.stdout.flush()
 
             predictionError = predictor.computeExpectedLoss(self.dataset.testFeatures,
                 self.dataset.testLabels) * numLabels
         else:
             if self.verbose:
-                print "wNorm", scipy.linalg.norm(self.labeler.coef_)
+                print("wNorm", scipy.linalg.norm(self.labeler.coef_))
                 sys.stdout.flush()
 
             predictionError = self.labeler.computeExpectedLoss(self.dataset.testFeatures,
                 self.dataset.testLabels) * numLabels
 
         if self.verbose:
-            print self.Name,"Test. Expected Loss: ", predictionError
+            print(self.Name,"Test. Expected Loss: ", predictionError)
             sys.stdout.flush()
         return predictionError
 
@@ -169,7 +169,7 @@ class CRF(Skylines):
             predictedLabels = numpy.zeros(numpy.shape(self.dataset.validateLabels), dtype = numpy.int)
 
         numLabels = numpy.shape(self.dataset.trainLabels)[1]
-        for i in xrange(numLabels):
+        for i in range(numLabels):
             currLabels = self.dataset.trainLabels[:, i]
             if currLabels.sum() > 0:        #Avoid training labels with no positive instances
                 logitRegressor = sklearn.linear_model.LogisticRegression(C = param,
@@ -192,7 +192,7 @@ class CRF(Skylines):
     def generatePredictions(self, classifiers):
         predictedLabels = numpy.zeros(numpy.shape(self.dataset.testLabels), dtype = numpy.int)
         numLabels = numpy.shape(predictedLabels)[1]
-        for i in xrange(numLabels):
+        for i in range(numLabels):
             if classifiers[i] is not None:
                 predictedLabels[:,i] = classifiers[i].predict(self.dataset.testFeatures)
 
@@ -252,7 +252,7 @@ class PRMWrapper(Skylines):
         if percentileClip < 1:
             percentileClip = 1
         if self.verbose:
-            print "Calibrating clip to ", percentileClip
+            print("Calibrating clip to ", percentileClip)
             sys.stdout.flush()
 
         clipArray = numpy.array(self.params['clip'])
@@ -267,7 +267,7 @@ class PRMWrapper(Skylines):
         max_val = - meanLoss / sqrtLossVar
 
         if self.verbose:
-            print "Calibrating variance regularizer to ", max_val
+            print("Calibrating variance regularizer to ", max_val)
             sys.stdout.flush()
 
         varArray = numpy.array(self.params['varpenalty'])
@@ -275,7 +275,7 @@ class PRMWrapper(Skylines):
 
         self.params['varpenalty'] = varpenalty.tolist()
 
-        self.params = list(sklearn.grid_search.ParameterGrid(self.params))
+        self.params = list(ParameterGrid(self.params))
 
     def generateModel(self, param, reportValidationResult):
         predictor = None
