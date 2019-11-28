@@ -87,6 +87,7 @@ class Skylines:
 
     def test(self):
         predictedLabels = self.generatePredictions(self.labeler)
+        print("Mary: ", sum(predictedLabels))
         numLabels = numpy.shape(self.dataset.testLabels)[1]
         predictionError = sklearn.metrics.hamming_loss(self.dataset.testLabels,
             predictedLabels) * numLabels
@@ -122,7 +123,7 @@ class Skylines:
                 print("wNorm", scipy.linalg.norm(self.labeler.coef_))
                 sys.stdout.flush()
 
-            predictionError = self.labeler.computeExpectedLoss(self.dataset.testFeatures,
+            predictionError = self.labeler.computeExpectedLoss(self.dataset.testFeatures[:, :-1],
                 self.dataset.testLabels) * numLabels
 
         if self.verbose:
@@ -309,5 +310,5 @@ class PRMWrapper(Skylines):
         return predictionError, predictor, clippedDiagnostic, unclippedDiagnostic
 
     def generatePredictions(self, classifier):
-        return classifier.predict(self.dataset.testFeatures)
+        return classifier.predict(self.dataset.testFeatures[:, :-1])
 

@@ -169,7 +169,7 @@ def load_adult_data(load_data_size=None):
 
 def main():
     """ Load the adult data """
-    X, y, x_control = load_adult_data(load_data_size=1000)  # set the argument to none, or no arguments if you want to test with the whole data -- we are subsampling for performance speedup
+    X, y, x_control = load_adult_data(load_data_size=None)  # set the argument to none, or no arguments if you want to test with the whole data -- we are subsampling for performance speedup
     ut.compute_p_rule(x_control["sex"], y)  # compute the p-rule in the original data
     data = np.hstack((X, np.reshape(x_control['sex'], (-1,1)), np.reshape(y, (-1, 1))))
     np.savetxt("data/adult-cleaned.dat", data, fmt='%d')

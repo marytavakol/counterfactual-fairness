@@ -1,30 +1,24 @@
-import os,sys
+import sys
 sys.path.insert(0, 'Poem-Norm/')
 sys.path.insert(0, 'fair_classification/')
-import numpy as np
 import DatasetReader
 import Skylines
 import Logger
-import PRM
-import numpy
-import sys
-import PDTTest
 import itertools
-import operator
 
 if __name__ == '__main__':
     name = "data/adult-cleaned.dat"
     if len(sys.argv) > 1:
         name = str(sys.argv[1])
 
-    dataset = DatasetReader.DatasetReader(copy_dataset = None, verbose = True)
+    dataset = DatasetReader.DatasetReader(copy_dataset = None, verbose = False)
     dataset.loadDataset(filename = name)
 
     SCORES = {}
     TIMES = {}
     CLIPPED_DIAGNOSTIC = {}
     UNCLIPPED_DIAGNOSTIC = {}
-    ESTIMATORS = ['Vanilla', 'SelfNormal']
+    ESTIMATORS = ['SelfNormal']
     VAR = ["ERM", "SVP"]
     APPROACHES = list(itertools.product(ESTIMATORS, VAR))
 
@@ -39,17 +33,16 @@ if __name__ == '__main__':
     for run in range(1):
         print("************************RUN ", run)
 
-        streamer = Logger.DataStream(dataset = dataset, verbose = True)
+        streamer = Logger.DataStream(dataset = dataset, verbose = False)
         features, labels = streamer.generateStream(subsampleFrac = 0.05, replayCount = 1)
 
-        subsampled_dataset = DatasetReader.DatasetReader(copy_dataset = dataset, verbose = True)
+        subsampled_dataset = DatasetReader.DatasetReader(copy_dataset = dataset, verbose = False)
         subsampled_dataset.trainFeatures = features
         subsampled_dataset.trainLabels = labels
-        logger = Logger.Logger(subsampled_dataset, loggerC = -1, stochasticMultiplier = 1, verbose = True)
-        print(logger.crf.test())
-        print(logger.crf.expectedTestLoss())
+        logger = Logger.Logger(subsampled_dataset, loggerC = -1, stochasticMultiplier = 1, verbose = False)
+        logger.crf.test()
 
-        replayed_dataset = DatasetReader.DatasetReader(copy_dataset = dataset, verbose = True)
+        replayed_dataset = DatasetReader.DatasetReader(copy_dataset = dataset, verbose = False)
 
         features, labels = streamer.generateStream(subsampleFrac = 1.0, replayCount = 1)
         replayed_dataset.trainFeatures = features
@@ -58,13 +51,13 @@ if __name__ == '__main__':
         sampledLabels, sampledLogPropensity, sampledLoss = logger.generateLog(replayed_dataset)
         replayed_dataset.trainFeatures = replayed_dataset.trainFeatures[:, :-1]
 
-        bandit_dataset = DatasetReader.BanditDataset(dataset = replayed_dataset, verbose = True)
+        bandit_dataset = DatasetReader.BanditDataset(dataset = replayed_dataset, verbose = False)
 
         replayed_dataset.freeAuxiliaryMatrices()
         del replayed_dataset
 
         bandit_dataset.registerSampledData(sampledLabels, sampledLogPropensity, sampledLoss)
-        bandit_dataset.createTrainValidateSplit(validateFrac = 0.25)
+        bandit_dataset.createTrainValidateSplit(validateFrac = 0.2)
 
 
         for approach in APPROACHES:
@@ -82,9 +75,9 @@ if __name__ == '__main__':
                                     minClip = 0, maxClip = 0, estimator_type = approach[0], verbose = True, parallel=None, smartStart=None)
             model.calibrateHyperParams()
             retTime, retClippedDiagnostic, retUnclippedDiagnostic = model.validate()
+
+            # evaluation
             SCORES[strApproach+"_map"].append(model.test())
-            #evaluation
-            SCORES[strApproach].append(model.expectedTestLoss())
 
             model.freeAuxiliaryMatrices()
             del model
