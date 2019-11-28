@@ -15,7 +15,6 @@ if __name__ == '__main__':
     dataset.loadDataset(filename = name)
 
     SCORES = {}
-    TIMES = {}
     CLIPPED_DIAGNOSTIC = {}
     UNCLIPPED_DIAGNOSTIC = {}
     ESTIMATORS = ['SelfNormal']
@@ -24,7 +23,6 @@ if __name__ == '__main__':
 
     for approach in APPROACHES:
         strApproach = str(approach)
-        TIMES[strApproach] = []
         CLIPPED_DIAGNOSTIC[strApproach] = []
         UNCLIPPED_DIAGNOSTIC[strApproach] = []
         SCORES[strApproach] = []
@@ -34,13 +32,14 @@ if __name__ == '__main__':
         print("************************RUN ", run)
 
         streamer = Logger.DataStream(dataset = dataset, verbose = False)
-        features, labels = streamer.generateStream(subsampleFrac = 0.05, replayCount = 1)
+        features, labels = streamer.generateStream(subsampleFrac = 0.1, replayCount = 1)
 
         subsampled_dataset = DatasetReader.DatasetReader(copy_dataset = dataset, verbose = False)
         subsampled_dataset.trainFeatures = features
         subsampled_dataset.trainLabels = labels
         logger = Logger.Logger(subsampled_dataset, loggerC = -1, stochasticMultiplier = 1, verbose = False)
-        print("logger performance: ", logger.crf.test())
+        test_score = logger.crf.test()
+        print("logger performance: ", test_score)
 
         replayed_dataset = DatasetReader.DatasetReader(copy_dataset = dataset, verbose = False)
 

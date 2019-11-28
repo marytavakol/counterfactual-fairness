@@ -87,8 +87,9 @@ class Skylines:
 
     def test(self):
         predictedLabels = self.generatePredictions(self.labeler)
-        test_score, correct_answers_test = ut.check_accuracy(self.dataset.testFeatures, self.dataset.testLabels, predictedLabels)
+        test_score, correct_answers_test = ut.check_test_accuracy(self.dataset.testLabels, predictedLabels)
         print("accuracy: ", test_score)
+        ut.compute_p_rule(self.dataset.testFeatures[:, -1].todense(), predictedLabels)
 
         # numLabels = numpy.shape(self.dataset.testLabels)[1]
         # predictionError = sklearn.metrics.hamming_loss(self.dataset.testLabels,
@@ -175,8 +176,8 @@ class CRF(Skylines):
         for i in range(numLabels):
             currLabels = self.dataset.trainLabels[:, i]
             if currLabels.sum() > 0:        #Avoid training labels with no positive instances
-                logitRegressor = sklearn.linear_model.LogisticRegression(solver='liblinear', C = param,
-                    penalty = 'l2', tol = self.tol, dual = True, fit_intercept = False, max_iter=100)
+                logitRegressor = sklearn.linear_model.LogisticRegression(solver='lbfgs', C = param,
+                    penalty = 'l2', tol = self.tol, dual = False, fit_intercept = False, max_iter=1000)
                 logitRegressor.fit(self.dataset.trainFeatures, currLabels)
                 regressors.append(logitRegressor)
                 if reportValidationResult:

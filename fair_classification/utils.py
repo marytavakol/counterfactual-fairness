@@ -124,8 +124,7 @@ def train_model(x, y, x_control, loss_function, apply_fairness_constraints, appl
             args = (x, x_control[sensitive_attrs[0]]),
             method = 'SLSQP',
             options = {"maxiter":100000},
-            constraints = constraints
-            )
+            constraints = constraints)
 
     try:
         assert(w.success == True)
@@ -255,13 +254,18 @@ def compute_p_rule(x_control, class_labels):
     prot_pos = sum(class_labels[x_control == 0.0] == 1.0) # protected in positive class
     frac_non_prot_pos = float(non_prot_pos) / float(non_prot_all)
     frac_prot_pos = float(prot_pos) / float(prot_all)
-    p_rule = (frac_prot_pos / frac_non_prot_pos) * 100.0
-    print()
-    print("Total data points: %d" % (len(x_control)))
-    print("# non-protected examples: %d" % (non_prot_all))
-    print("# protected examples: %d" % (prot_all))
-    print("Non-protected in positive class: %d (%0.0f%%)" % (non_prot_pos, non_prot_pos * 100.0 / non_prot_all))
-    print("Protected in positive class: %d (%0.0f%%)" % (prot_pos, prot_pos * 100.0 / prot_all))
+    if prot_pos == 0 or non_prot_pos ==0:
+        p_rule = 0 * 100.0
+    elif frac_prot_pos < frac_non_prot_pos:
+        p_rule = (frac_prot_pos / frac_non_prot_pos) * 100.0
+    else:
+        p_rule = (frac_non_prot_pos / frac_prot_pos) * 100.0
+
+    # print("Total data points: %d" % (len(x_control)))
+    # print("# non-protected examples: %d" % (non_prot_all))
+    # print("# protected examples: %d" % (prot_all))
+    # print("Non-protected in positive class: %d (%0.0f%%)" % (non_prot_pos, non_prot_pos * 100.0 / non_prot_all))
+    # print("Protected in positive class: %d (%0.0f%%)" % (prot_pos, prot_pos * 100.0 / prot_all))
     print("P-rule is: %0.0f%%" % ( p_rule ))
     return p_rule
 
@@ -332,7 +336,7 @@ def get_one_hot_encoding(in_arr):
 
     return np.array(out_arr), index_dict
 
-def check_accuracy(x_test, y_test, y_test_predicted):
+def check_test_accuracy(y_test, y_test_predicted):
 
 
     """
@@ -353,31 +357,31 @@ def check_accuracy(x_test, y_test, y_test_predicted):
 
     return test_score, correct_answers_test
 
-# def check_accuracy(model, x_train, y_train, x_test, y_test, y_train_predicted, y_test_predicted):
-#
-#
-#     """
-#     returns the train/test accuracy of the model
-#     we either pass the model (w)
-#     else we pass y_predicted
-#     """
-#     if model is not None and y_test_predicted is not None:
-#         print("Either the model (w) or the predicted labels should be None")
-#         raise Exception("Either the model (w) or the predicted labels should be None")
-#
-#     if model is not None:
-#         y_test_predicted = np.sign(np.dot(x_test, model))
-#         y_train_predicted = np.sign(np.dot(x_train, model))
-#
-#     def get_accuracy(y, Y_predicted):
-#         correct_answers = (Y_predicted == y).astype(int) # will have 1 when the prediction and the actual label match
-#         accuracy = float(sum(correct_answers)) / float(len(correct_answers))
-#         return accuracy, sum(correct_answers)
-#
-#     train_score, correct_answers_train = get_accuracy(y_train, y_train_predicted)
-#     test_score, correct_answers_test = get_accuracy(y_test, y_test_predicted)
-#
-#     return train_score, test_score, correct_answers_train, correct_answers_test
+def check_accuracy(model, x_train, y_train, x_test, y_test, y_train_predicted, y_test_predicted):
+
+
+    """
+    returns the train/test accuracy of the model
+    we either pass the model (w)
+    else we pass y_predicted
+    """
+    if model is not None and y_test_predicted is not None:
+        print("Either the model (w) or the predicted labels should be None")
+        raise Exception("Either the model (w) or the predicted labels should be None")
+
+    if model is not None:
+        y_test_predicted = np.sign(np.dot(x_test, model))
+        y_train_predicted = np.sign(np.dot(x_train, model))
+
+    def get_accuracy(y, Y_predicted):
+        correct_answers = (Y_predicted == y).astype(int) # will have 1 when the prediction and the actual label match
+        accuracy = float(sum(correct_answers)) / float(len(correct_answers))
+        return accuracy, sum(correct_answers)
+
+    train_score, correct_answers_train = get_accuracy(y_train, y_train_predicted)
+    test_score, correct_answers_test = get_accuracy(y_test, y_test_predicted)
+
+    return train_score, test_score, correct_answers_train, correct_answers_test
 
 def test_sensitive_attr_constraint_cov(model, x_arr, y_arr_dist_boundary, x_control, thresh, verbose):
 

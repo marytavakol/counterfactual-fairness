@@ -97,8 +97,8 @@ class Logger:
         prot_prob, non_prot_prob = ut.compute_imbalance(x_control, dataset.trainLabels)
         sampledLoss = numpy.zeros(numSamples)-1
         rand = numpy.random.rand(numSamples, 1)
-        non_prot_ind = numpy.where((x_control == 1.0) & (dataset.trainLabels == 1.0) & (rand < non_prot_prob))[0]
-        prot_ind = numpy.where((x_control == 0.0) & (dataset.trainLabels == 0.0) & (rand < prot_prob))[0]
+        non_prot_ind = numpy.where((x_control == 1.0) & (dataset.trainLabels == 1.0) & (rand < non_prot_prob/2))[0]
+        prot_ind = numpy.where((x_control == 0.0) & (dataset.trainLabels == 0.0) & (rand < prot_prob/2))[0]
         sampledLoss[prot_ind] = 0
         sampledLoss[non_prot_ind] = 0
 
