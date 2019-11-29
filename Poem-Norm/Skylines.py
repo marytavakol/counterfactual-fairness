@@ -198,7 +198,7 @@ class CRF(Skylines):
         numLabels = numpy.shape(predictedLabels)[1]
         for i in range(numLabels):
             if classifiers[i] is not None:
-                predictedLabels[:,i] = classifiers[i].predict(self.dataset.testFeatures)
+                predictedLabels[:,i] = classifiers[i].predict(self.dataset.testFeatures[:, :-1])
 
         return predictedLabels
 

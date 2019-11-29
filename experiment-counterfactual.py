@@ -35,7 +35,7 @@ if __name__ == '__main__':
         features, labels = streamer.generateStream(subsampleFrac = 0.1, replayCount = 1)
 
         subsampled_dataset = DatasetReader.DatasetReader(copy_dataset = dataset, verbose = False)
-        subsampled_dataset.trainFeatures = features
+        subsampled_dataset.trainFeatures = features[:, :-1]
         subsampled_dataset.trainLabels = labels
         logger = Logger.Logger(subsampled_dataset, loggerC = -1, stochasticMultiplier = 1, verbose = False)
         test_score = logger.crf.test()

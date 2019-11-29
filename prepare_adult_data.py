@@ -174,7 +174,7 @@ def main():
     #X_norm = MinMaxScaler().fit_transform(X)
     ut.compute_p_rule(x_control["sex"], y)  # compute the p-rule in the original data
     data = np.hstack((X, np.reshape(x_control['sex'], (-1,1)), np.reshape(y, (-1, 1))))
-    np.savetxt("data/adult-cleaned.dat", data, fmt='%d')
+    np.savetxt("data/adult-cleaned.dat", data, fmt='%1.1f')
 
 
 if __name__ == '__main__':
