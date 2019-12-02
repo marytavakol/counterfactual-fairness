@@ -278,10 +278,10 @@ def compute_imbalance(x_control, class_labels):
     non_prot_pos = sum(class_labels[x_control == 1.0] == 1.0)  # non_protected in positive class
     prot_pos = sum(class_labels[x_control == 0.0] == 1.0)  # protected in positive class
     magic_num = (((prot_pos + non_prot_pos) * prot_all) / (prot_all + non_prot_all)) - prot_pos
-    prot_prob = magic_num / prot_all
-    non_prot_prob = magic_num/non_prot_pos
+    #prot_prob = magic_num / prot_all
+    #non_prot_prob = magic_num/non_prot_pos
 
-    return prot_prob[0], non_prot_prob[0]
+    return int(magic_num) #prot_prob[0], non_prot_prob[0]
 
 
 

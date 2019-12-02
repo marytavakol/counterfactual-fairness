@@ -81,12 +81,12 @@ class Logger:
         numSamples, numFeatures = numpy.shape(dataset.trainFeatures)
         numLabels = numpy.shape(dataset.trainLabels)[1]
 
-        sampledLabels = dataset.trainLabels
+        sampledLabels = dataset.trainLabels.copy()
         logpropensity = numpy.zeros(numSamples, dtype = numpy.longdouble)
         for i in range(numLabels):
             if self.crf.labeler[i] is not None:
                 regressor = self.crf.labeler[i]
-                predictedProbabilities = regressor.predict_log_proba(dataset.trainFeatures[:, :-1])
+                predictedProbabilities = regressor.predict_log_proba(dataset.trainFeatures)
 
                 probSampledLabel = numpy.zeros(numSamples, dtype=numpy.longdouble)
                 probSampledLabel[sampledLabels[:, 0] > 0] = predictedProbabilities[sampledLabels[:, 0] > 0, 1]
@@ -94,13 +94,27 @@ class Logger:
                 logpropensity = logpropensity + probSampledLabel
 
         x_control = dataset.trainFeatures[:, -1].todense()
-        prot_prob, non_prot_prob = ut.compute_imbalance(x_control, dataset.trainLabels)
-        sampledLoss = numpy.zeros(numSamples)-1
-        rand = numpy.random.rand(numSamples, 1)
-        non_prot_ind = numpy.where((x_control == 1.0) & (dataset.trainLabels == 1.0) & (rand < non_prot_prob))[0]
-        prot_ind = numpy.where((x_control == 0.0) & (dataset.trainLabels == 0.0) & (rand < prot_prob))[0]
+        control_num = ut.compute_imbalance(x_control, dataset.trainLabels)
+        actualProb = numpy.exp(predictedProbabilities)
+        prot_neg = numpy.where((x_control == 0.0) & (dataset.trainLabels == 0.0))[0]
+        non_prot_pos = numpy.where((x_control == 1.0) & (dataset.trainLabels == 1.0))[0]
+        prot_low_prob = numpy.argsort(actualProb[prot_neg, 0])[:control_num]
+        non_prot_low_prob = numpy.argsort(actualProb[non_prot_pos, 1])[:control_num]
+
+        sampledLoss = numpy.zeros(numSamples) - 1
+
+        prot_ind = prot_neg[prot_low_prob]
+        non_prot_ind = non_prot_pos[non_prot_low_prob]
+
         sampledLoss[prot_ind] = 0
         sampledLoss[non_prot_ind] = 0
+
+
+        # rand = numpy.random.rand(numSamples, 1)
+        # non_prot_ind = numpy.where((x_control == 1.0) & (dataset.trainLabels == 1.0) & (rand < non_prot_prob))[0]
+        # prot_ind = numpy.where((x_control == 0.0) & (dataset.trainLabels == 0.0) & (rand < prot_prob))[0]
+        # sampledLoss[prot_ind] = 0
+        # sampledLoss[non_prot_ind] = 0
 
         if self.verbose:
             averageSampledLoss = sampledLoss.mean(dtype = numpy.longdouble)
