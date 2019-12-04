@@ -5,6 +5,7 @@ import scipy.optimize
 import scipy.special
 import sklearn.base
 import sys
+import utils as ut
 
 
 class PRMEstimator(sklearn.base.BaseEstimator, sklearn.base.ClassifierMixin):
@@ -166,28 +167,33 @@ class MultiLabelEstimator(PRMEstimator):
         numLabels = numpy.shape(Y)[1]
         translated_delta = delta
 
-        WX = X.dot(self.coef_)
-        YSign = 2*Y - 1
-        YWX = numpy.multiply(WX, YSign)
-        ProbPerInstanceLabel = scipy.special.expit(YWX)
-        zeroMask = ProbPerInstanceLabel <= 0
-        ProbPerInstanceLabel[zeroMask] = 1.0
-        zeroEntries = zeroMask.sum(axis = 1, dtype = numpy.int)
-        zeroMask = zeroEntries > 0
+        predictedLabels = self.predict(X)
+        test_score, correct_answers_test = ut.check_test_accuracy(Y, predictedLabels)
+        print("accuracy: ", test_score)
+        #ut.compute_p_rule(self.dataset.testFeatures[:, -1].todense(), predictedLabels)
 
-        logProbPerInstanceLabel = numpy.log(ProbPerInstanceLabel)
-        logProbPerInstance = numpy.sum(logProbPerInstanceLabel, axis = 1, dtype = numpy.longdouble)
-        logImportanceSampleWeights = logProbPerInstance - logpropensity
+        # WX = X.dot(self.coef_)
+        # YSign = 2*Y - 1
+        # YWX = numpy.multiply(WX, YSign)
+        # ProbPerInstanceLabel = scipy.special.expit(YWX)
+        # zeroMask = ProbPerInstanceLabel <= 0
+        # ProbPerInstanceLabel[zeroMask] = 1.0
+        # zeroEntries = zeroMask.sum(axis = 1, dtype = numpy.int)
+        # zeroMask = zeroEntries > 0
+        #
+        # logProbPerInstanceLabel = numpy.log(ProbPerInstanceLabel)
+        # logProbPerInstance = numpy.sum(logProbPerInstanceLabel, axis = 1, dtype = numpy.longdouble)
+        # logImportanceSampleWeights = logProbPerInstance - logpropensity
+        #
+        # ImportanceSampleWeights = numpy.exp(logImportanceSampleWeights)
+        # ImportanceSampleWeights[zeroMask] = 0.0
+        #
+        # WeightedLossPerInstance = numpy.multiply(translated_delta, ImportanceSampleWeights)
+        # sumWeightedLoss = WeightedLossPerInstance.sum(dtype = numpy.longdouble)
+        # sumWeights = ImportanceSampleWeights.sum(dtype = numpy.longdouble)
+        # meanWeightedLoss = sumWeightedLoss / sumWeights
 
-        ImportanceSampleWeights = numpy.exp(logImportanceSampleWeights)
-        ImportanceSampleWeights[zeroMask] = 0.0
-
-        WeightedLossPerInstance = numpy.multiply(translated_delta, ImportanceSampleWeights)
-        sumWeightedLoss = WeightedLossPerInstance.sum(dtype = numpy.longdouble)
-        sumWeights = ImportanceSampleWeights.sum(dtype = numpy.longdouble)
-        meanWeightedLoss = sumWeightedLoss / sumWeights
-
-        return 1.0 + (meanWeightedLoss / numLabels)
+        return 1-test_score#1.0 + (meanWeightedLoss / numLabels)
 
 
 class VanillaISEstimator(MultiLabelEstimator):

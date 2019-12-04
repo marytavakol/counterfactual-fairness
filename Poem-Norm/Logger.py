@@ -93,6 +93,7 @@ class Logger:
                 probSampledLabel[sampledLabels[:, 0] < 1] = predictedProbabilities[sampledLabels[:, 0] < 1, 0]
                 logpropensity = logpropensity + probSampledLabel
 
+
         x_control = dataset.trainFeatures[:, -1].todense()
         control_num = ut.compute_imbalance(x_control, dataset.trainLabels)
         actualProb = numpy.exp(predictedProbabilities)

@@ -365,3 +365,5 @@ class MajorizeStochasticEstimator(MajorizeISEstimator):
                     best_val = val
                     self.coef_ = coef
         """
+
+        return 1 , 1

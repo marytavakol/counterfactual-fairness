@@ -177,7 +177,7 @@ class CRF(Skylines):
             currLabels = self.dataset.trainLabels[:, i]
             if currLabels.sum() > 0:        #Avoid training labels with no positive instances
                 logitRegressor = sklearn.linear_model.LogisticRegression(solver='lbfgs', C = param,
-                    penalty = 'l2', tol = self.tol, dual = False, fit_intercept = False, max_iter=1000)
+                    penalty = 'l2', tol = self.tol, dual = False, fit_intercept = False, max_iter=10000)
                 logitRegressor.fit(self.dataset.trainFeatures, currLabels)
                 regressors.append(logitRegressor)
                 if reportValidationResult:

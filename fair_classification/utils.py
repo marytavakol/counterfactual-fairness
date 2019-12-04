@@ -259,6 +259,7 @@ def compute_p_rule(x_control, class_labels):
     elif frac_prot_pos < frac_non_prot_pos:
         p_rule = (frac_prot_pos / frac_non_prot_pos) * 100.0
     else:
+        print("noooo")
         p_rule = (frac_non_prot_pos / frac_prot_pos) * 100.0
 
     # print("Total data points: %d" % (len(x_control)))
