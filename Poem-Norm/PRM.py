@@ -6,6 +6,7 @@ import scipy.special
 import sklearn.base
 import sys
 import utils as ut
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 
 class PRMEstimator(sklearn.base.BaseEstimator, sklearn.base.ClassifierMixin):
@@ -169,7 +170,7 @@ class MultiLabelEstimator(PRMEstimator):
 
         predictedLabels = self.predict(X)
         test_score, correct_answers_test = ut.check_test_accuracy(Y, predictedLabels)
-        print("validation accuracy: ", test_score)
+        #print("validation accuracy: ", test_score)
         #ut.compute_p_rule(self.dataset.testFeatures[:, -1].todense(), predictedLabels)
 
         # WX = X.dot(self.coef_)
@@ -195,6 +196,22 @@ class MultiLabelEstimator(PRMEstimator):
 
         return 1-test_score#1.0 + (meanWeightedLoss / numLabels)
 
+    def computeValidationLoss(self, X, Y):
+
+        predictedLabels = self.predict(X[:, :-1])
+        #acc = accuracy_score(Y, predictedLabels)
+        #f1 = f1_score(Y, predictedLabels)
+        auc = roc_auc_score(Y, predictedLabels)
+        #print("Accuracy: ", acc)
+        #print("F1-measure: ", f1)
+        #print("AUC: ", auc)
+        pval = ut.compute_p_rule(X[:, -1].todense(), predictedLabels)
+        #print("P-rule: ", pval)
+
+        error = 2 - auc - pval
+        #print("Error", error)
+
+        return error
 
 class VanillaISEstimator(MultiLabelEstimator):
     def Objective(self, w):

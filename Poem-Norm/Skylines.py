@@ -10,6 +10,7 @@ import sklearn.svm
 import sys
 import time
 import utils as ut
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 
 class Skylines:
@@ -87,18 +88,15 @@ class Skylines:
 
     def test(self):
         predictedLabels = self.generatePredictions(self.labeler)
-        test_score, correct_answers_test = ut.check_test_accuracy(self.dataset.testLabels, predictedLabels)
-        #print("accuracy: ", test_score)
+        #acc = accuracy_score(self.dataset.testLabels, predictedLabels)
+        #f1 = f1_score(self.dataset.testLabels, predictedLabels)
+        auc = roc_auc_score(self.dataset.testLabels, predictedLabels)
+        #print("Accuracy: ", acc)
+        #print("F1-measure: ", f1)
+        #print("AUC: ", auc)
         p_rule = ut.compute_p_rule(self.dataset.testFeatures[:, -1].todense(), predictedLabels)
 
-        # numLabels = numpy.shape(self.dataset.testLabels)[1]
-        # predictionError = sklearn.metrics.hamming_loss(self.dataset.testLabels,
-        #     predictedLabels) * numLabels
-
-        # if self.verbose:
-        #     print(self.Name," Test. Performance: ", predictionError)
-        #     sys.stdout.flush()
-        return test_score, p_rule
+        return auc, p_rule
 
     def expectedTestLoss(self):
         predictionError = None
@@ -306,8 +304,9 @@ class PRMWrapper(Skylines):
 
         predictionError = None
         if reportValidationResult:
-            predictionError = predictor.computeCfactHammingLoss(self.dataset.validateFeatures, self.dataset.validateSampledLabels,
-                                self.dataset.validateSampledLoss, self.dataset.validateSampledLogPropensity)
+            #predictionError = predictor.computeCfactHammingLoss(self.dataset.validateFeatures, self.dataset.validateSampledLabels,
+             #                   self.dataset.validateSampledLoss, self.dataset.validateSampledLogPropensity)
+            predictionError = predictor.computeValidationLoss(self.dataset.validateFeatures, self.dataset.validateSampledLabels)
 
         predictor.freeAuxiliaryMatrices()
         return predictionError, predictor, clippedDiagnostic, unclippedDiagnostic

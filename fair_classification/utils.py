@@ -7,6 +7,7 @@ from collections import defaultdict
 from copy import deepcopy
 import matplotlib.pyplot as plt # for plotting stuff
 import sys
+from sklearn.metrics import accuracy_score
 
 # SEED = 1122334455
 # seed(SEED) # set the random seed so that the random permutations can be reproduced again
@@ -259,7 +260,7 @@ def compute_p_rule(x_control, class_labels):
     elif frac_prot_pos < frac_non_prot_pos:
         p_rule = (frac_prot_pos / frac_non_prot_pos)
     else:
-        print("Reverse discremination!")
+        #print("Reverse discremination!")
         p_rule = (frac_non_prot_pos / frac_prot_pos)
 
     # print("Total data points: %d" % (len(x_control)))
@@ -337,26 +338,28 @@ def get_one_hot_encoding(in_arr):
 
     return np.array(out_arr), index_dict
 
-def check_test_accuracy(y_test, y_test_predicted):
-
-
-    """
-    returns the train/test accuracy of the model
-    we either pass the model (w)
-    else we pass y_predicted
-    """
-    if y_test_predicted is None:
-        print("Either the model (w) or the predicted labels should be None")
-        raise Exception("Either the model (w) or the predicted labels should be None")
-
-    def get_accuracy(y, Y_predicted):
-        correct_answers = (Y_predicted == y).astype(int) # will have 1 when the prediction and the actual label match
-        accuracy = float(sum(correct_answers)) / float(len(correct_answers))
-        return accuracy, sum(correct_answers)
-
-    test_score, correct_answers_test = get_accuracy(y_test, y_test_predicted)
-
-    return test_score, correct_answers_test
+# def check_test_accuracy(y_test, y_test_predicted):
+#
+#
+#     """
+#     returns the train/test accuracy of the model
+#     we either pass the model (w)
+#     else we pass y_predicted
+#     """
+#     if y_test_predicted is None:
+#         print("Either the model (w) or the predicted labels should be None")
+#         raise Exception("Either the model (w) or the predicted labels should be None")
+#
+#     def get_accuracy(y, Y_predicted):
+#         correct_answers = (Y_predicted == y).astype(int) # will have 1 when the prediction and the actual label match
+#         accuracy = float(sum(correct_answers)) / float(len(correct_answers))
+#         return accuracy, sum(correct_answers)
+#
+#     test_score, correct_answers_test = get_accuracy(y_test, y_test_predicted)
+#     acc = accuracy_score(y_test, y_test_predicted)
+#     print("acc: ", acc, " == ", test_score)
+#
+#     return test_score, correct_answers_test
 
 def check_accuracy(model, x_train, y_train, x_test, y_test, y_train_predicted, y_test_predicted):
 
