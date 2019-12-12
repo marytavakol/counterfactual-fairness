@@ -20,8 +20,7 @@ if __name__ == '__main__':
     dataset.loadDataset(filename = name)
 
     SCORES = {}
-    CLIPPED_DIAGNOSTIC = {}
-    UNCLIPPED_DIAGNOSTIC = {}
+    PRULES = {}
     ESTIMATORS = ['SelfNormal']
     VAR = ["SVP"]
     APPROACHES = list(itertools.product(ESTIMATORS, VAR))
@@ -29,8 +28,9 @@ if __name__ == '__main__':
     for approach in APPROACHES:
         strApproach = str(approach)
         SCORES[strApproach] = []
+        PRULES[strApproach] = []
 
-    for run in range(10):
+    for run in range(3):
         print("************************RUN ", run)
 
         streamer = Logger.DataStream(dataset = dataset, verbose = False)
@@ -40,8 +40,9 @@ if __name__ == '__main__':
         subsampled_dataset.trainFeatures = features
         subsampled_dataset.trainLabels = labels
         logger = Logger.Logger(subsampled_dataset, loggerC = -1, stochasticMultiplier = 1, verbose = False)
-        test_score = logger.crf.test()
+        test_score, p_rule = logger.crf.test()
         print("logger performance: ", test_score)
+        print("P-ruls is: ", p_rule)
 
         replayed_dataset = DatasetReader.DatasetReader(copy_dataset = dataset, verbose = False)
 
@@ -81,9 +82,13 @@ if __name__ == '__main__':
             model = Skylines.PRMWrapper(currDataset, n_iter = 1000, tol = 1e-6, minC = 0, maxC = -1, minV = minVar, maxV = maxVar,
                                     minClip = 0, maxClip = 0, estimator_type = approach[0], verbose = False, parallel=None, smartStart=coef)
             model.calibrateHyperParams()
-            retTime, retClippedDiagnostic, retUnclippedDiagnostic = model.validate()
+            model.validate()
             # evaluation
-            SCORES[strApproach].append(model.test())
+            result = model.test()
+            print("Performance: ", result[0])
+            print("P-rule: ", result[1])
+            SCORES[strApproach].append(result[0])
+            PRULES[strApproach].append(result[1])
 
             model.freeAuxiliaryMatrices()
             del model
@@ -93,8 +98,10 @@ if __name__ == '__main__':
 
     for approach in APPROACHES:
         print("Approach: ", approach)
-        print("Average: ", numpy.mean(SCORES[str(approach)]))
-        print("STD: ", numpy.std(SCORES[str(approach)]))
+        print("Average Performance: ", numpy.mean(SCORES[str(approach)]))
+        print("STD Performance: ", numpy.std(SCORES[str(approach)]))
+        print("Average Performance: ", numpy.mean(PRULES[str(approach)]))
+        print("STD Performance: ", numpy.std(PRULES[str(approach)]))
     dataset.freeAuxiliaryMatrices()
     del dataset
 

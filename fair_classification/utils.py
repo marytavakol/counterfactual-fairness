@@ -8,9 +8,9 @@ from copy import deepcopy
 import matplotlib.pyplot as plt # for plotting stuff
 import sys
 
-SEED = 1122334455
-seed(SEED) # set the random seed so that the random permutations can be reproduced again
-np.random.seed(SEED)
+# SEED = 1122334455
+# seed(SEED) # set the random seed so that the random permutations can be reproduced again
+# np.random.seed(SEED)
 
 
 
@@ -255,19 +255,19 @@ def compute_p_rule(x_control, class_labels):
     frac_non_prot_pos = float(non_prot_pos) / float(non_prot_all)
     frac_prot_pos = float(prot_pos) / float(prot_all)
     if prot_pos == 0 or non_prot_pos ==0:
-        p_rule = 0 * 100.0
+        p_rule = 0
     elif frac_prot_pos < frac_non_prot_pos:
-        p_rule = (frac_prot_pos / frac_non_prot_pos) * 100.0
+        p_rule = (frac_prot_pos / frac_non_prot_pos)
     else:
-        print("noooo")
-        p_rule = (frac_non_prot_pos / frac_prot_pos) * 100.0
+        print("Reverse discremination!")
+        p_rule = (frac_non_prot_pos / frac_prot_pos)
 
     # print("Total data points: %d" % (len(x_control)))
     # print("# non-protected examples: %d" % (non_prot_all))
     # print("# protected examples: %d" % (prot_all))
     # print("Non-protected in positive class: %d (%0.0f%%)" % (non_prot_pos, non_prot_pos * 100.0 / non_prot_all))
     # print("Protected in positive class: %d (%0.0f%%)" % (prot_pos, prot_pos * 100.0 / prot_all))
-    print("P-rule is: %0.0f%%" % ( p_rule ))
+    #print("P-rule is: %0.0f%%" % ( p_rule ))
     return p_rule
 
 def compute_imbalance(x_control, class_labels):

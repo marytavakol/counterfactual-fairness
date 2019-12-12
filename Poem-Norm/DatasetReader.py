@@ -76,7 +76,7 @@ class DatasetReader:
             return
 
         all_data = numpy.loadtxt(filename)
-        train_data , test_data = sklearn.model_selection.train_test_split(all_data, shuffle=True, test_size=0.2)
+        train_data , test_data = sklearn.model_selection.train_test_split(all_data, shuffle=True, test_size=0.3)
 
         train_features = train_data[:, :-1]
         self.trainLabels = numpy.reshape(train_data[:, -1], (-1, 1))

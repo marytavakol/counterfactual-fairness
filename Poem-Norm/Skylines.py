@@ -83,13 +83,13 @@ class Skylines:
             sys.stdout.flush()
 
         self.labeler = bestClassifier
-        return avg_time, bestClippedDiagnostic, bestUnclippedDiagnostic
+        return #avg_time, bestClippedDiagnostic, bestUnclippedDiagnostic
 
     def test(self):
         predictedLabels = self.generatePredictions(self.labeler)
         test_score, correct_answers_test = ut.check_test_accuracy(self.dataset.testLabels, predictedLabels)
-        print("accuracy: ", test_score)
-        ut.compute_p_rule(self.dataset.testFeatures[:, -1].todense(), predictedLabels)
+        #print("accuracy: ", test_score)
+        p_rule = ut.compute_p_rule(self.dataset.testFeatures[:, -1].todense(), predictedLabels)
 
         # numLabels = numpy.shape(self.dataset.testLabels)[1]
         # predictionError = sklearn.metrics.hamming_loss(self.dataset.testLabels,
@@ -98,7 +98,7 @@ class Skylines:
         # if self.verbose:
         #     print(self.Name," Test. Performance: ", predictionError)
         #     sys.stdout.flush()
-        return test_score
+        return test_score, p_rule
 
     def expectedTestLoss(self):
         predictionError = None

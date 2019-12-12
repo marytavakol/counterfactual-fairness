@@ -169,7 +169,7 @@ class MultiLabelEstimator(PRMEstimator):
 
         predictedLabels = self.predict(X)
         test_score, correct_answers_test = ut.check_test_accuracy(Y, predictedLabels)
-        print("accuracy: ", test_score)
+        print("validation accuracy: ", test_score)
         #ut.compute_p_rule(self.dataset.testFeatures[:, -1].todense(), predictedLabels)
 
         # WX = X.dot(self.coef_)
