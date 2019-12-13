@@ -24,11 +24,14 @@ if __name__ == '__main__':
     Prule_std = []
 
     replay_count = 1
-    for k in numpy.arange(0.1, 2.1, 0.1):
+    k = 0.8
+    for frac in numpy.arange(0.1, 1.1, 0.1):
+    #for k in numpy.arange(0.1, 2.1, 0.1):
     #for replay_count in range(1,11):
 
         #print("----------------------ReplayCount: ", replay_count)
-        print("----------------------k: ", k)
+        #print("----------------------k: ", k)
+        print("----------------------frac: ", frac)
 
         SCORES = {}
         ACCRCY = {}
@@ -48,7 +51,7 @@ if __name__ == '__main__':
             #print("************************RUN ", run)
 
             streamer = Logger.DataStream(dataset = dataset, verbose = False)
-            features, labels = streamer.generateStream(subsampleFrac = 0.1, replayCount = 1)
+            features, labels = streamer.generateStream(subsampleFrac = frac, replayCount = 1)
 
             subsampled_dataset = DatasetReader.DatasetReader(copy_dataset = dataset, verbose = False)
             subsampled_dataset.trainFeatures = features
