@@ -140,20 +140,21 @@ class SVM(Skylines):
         self.Name = "SVM"
 
     def generateModel(self, param, reportValidationResult):
-        svmClassifier = sklearn.svm.LinearSVC(loss = 'l1', C = param, penalty = 'l2',
+        svmClassifier = sklearn.svm.LinearSVC(loss = 'hinge', C = param, penalty = 'l2',
                 dual = True, tol = self.tol, verbose = False, fit_intercept = False)
-        multilabelClassifier = sklearn.multiclass.OneVsRestClassifier(svmClassifier, n_jobs=-1)
-        multilabelClassifier.fit(self.dataset.trainFeatures, self.dataset.trainLabels)
+        #multilabelClassifier = sklearn.multiclass.OneVsRestClassifier(svmClassifier, n_jobs=-1)
+        #multilabelClassifier.fit(self.dataset.trainFeatures, self.dataset.trainLabels)
+        svmClassifier.fit(self.dataset.trainFeatures, self.dataset.trainLabels)
 
         predictionError = None
         if reportValidationResult:
-            predictedLabels = multilabelClassifier.predict(self.dataset.validateFeatures)
+            predictedLabels = svmClassifier.predict(self.dataset.validateFeatures)
 
             predictionError = sklearn.metrics.hamming_loss(self.dataset.validateLabels,
                 predictedLabels)
 
         diagnostic = 1.0
-        return predictionError, multilabelClassifier, diagnostic, diagnostic
+        return predictionError, svmClassifier, diagnostic, diagnostic
 
     def generatePredictions(self, classifier):
         return classifier.predict(self.dataset.testFeatures)

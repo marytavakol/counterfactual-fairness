@@ -37,8 +37,8 @@ if __name__ == '__main__':
         SCORES = {}
         ACCRCY = {}
         PRULES = {}
-        ESTIMATORS = ['SelfNormal']
-        VAR = ["SVP"]
+        ESTIMATORS = ['Vanilla', 'Stochastic', 'SelfNormal']
+        VAR = ["ERM", "SVP"]
         APPROACHES = list(itertools.product(ESTIMATORS, VAR))
 
         for approach in APPROACHES:
@@ -57,8 +57,10 @@ if __name__ == '__main__':
             subsampled_dataset = DatasetReader.DatasetReader(copy_dataset = dataset, verbose = False)
             subsampled_dataset.trainFeatures = features
             subsampled_dataset.trainLabels = labels
-            logger = Logger.Logger(subsampled_dataset, loggerC = -1, stochasticMultiplier = 1, verbose = False)
+            logger = Logger.Logger(subsampled_dataset, loggerC = -1, stochasticMultiplier = 1, verbose = False, classifier = "crf")
             test_score = logger.crf.test()
+            #logger = Logger.Logger(subsampled_dataset, loggerC = -1, stochasticMultiplier = 1, verbose = False, classifier = "svm")
+            #logger.svm.test()
             #print("logger performance: ", test_score)
             #print("P-ruls is: ", p_rule)
 
@@ -119,6 +121,7 @@ if __name__ == '__main__':
         for approach in APPROACHES:
             #print(SCORES[str(approach)])
             #print(PRULES[str(approach)])
+            print("Approach: ", approach)
             auc = numpy.mean(SCORES[str(approach)])
             AUCs.append(auc)
             print("Average AUC: ", auc)

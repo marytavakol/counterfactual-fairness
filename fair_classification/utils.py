@@ -248,7 +248,7 @@ def print_classifier_fairness_stats(acc_arr, correlation_dict_arr, cov_dict_arr,
 def compute_p_rule(x_control, class_labels):
 
     """ Compute the p-rule based on Doctrine of disparate impact """
-    #class_labels = np.reshape(class_labels, (-1, 1))
+    class_labels = np.reshape(class_labels, (-1, 1))
     non_prot_all = sum(x_control == 1.0) # non-protected group
     prot_all = sum(x_control == 0.0) # protected group
     non_prot_pos = sum(class_labels[x_control == 1.0] == 1.0) # non_protected in positive class

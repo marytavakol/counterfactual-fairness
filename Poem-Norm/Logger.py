@@ -56,20 +56,27 @@ class DataStream:
 
 
 class Logger:
-    def __init__(self, dataset, loggerC, stochasticMultiplier, verbose):
+    def __init__(self, dataset, loggerC, stochasticMultiplier, verbose, classifier):
         self.verbose = verbose
-        crf = Skylines.CRF(dataset = dataset, tol = 1e-5, minC = loggerC, maxC = loggerC, verbose = self.verbose, parallel = True)
-        crf.Name = "LoggerCRF"
-        crf.validate()
-        if not(stochasticMultiplier == 1):
-            for i in range(len(crf.labeler)):
-                if crf.labeler[i] is not None:
-                    crf.labeler[i].coef_ = stochasticMultiplier * crf.labeler[i].coef_
+        if classifier == "crf":
+            crf = Skylines.CRF(dataset = dataset, tol = 1e-5, minC = loggerC, maxC = loggerC, verbose = self.verbose, parallel = True)
+            crf.Name = "LoggerCRF"
+            crf.validate()
+            if not(stochasticMultiplier == 1):
+                for i in range(len(crf.labeler)):
+                    if crf.labeler[i] is not None:
+                        crf.labeler[i].coef_ = stochasticMultiplier * crf.labeler[i].coef_
 
-        self.crf = crf
-        if self.verbose:
-            print("Logger: [Message] Trained logger crf. Weight-scale: ", stochasticMultiplier)
-            sys.stdout.flush()
+            self.crf = crf
+            if self.verbose:
+                print("Logger: [Message] Trained logger crf. Weight-scale: ", stochasticMultiplier)
+                sys.stdout.flush()
+
+        elif classifier == "svm":
+            svm = Skylines.SVM(dataset = dataset, tol = 1e-6, minC = -1, maxC = -1, verbose = True, parallel = None)
+            svm.Name = "LoggerSVM"
+            svm.validate()
+            self.svm = svm
 
     def freeAuxiliaryMatrices(self):
         del self.crf
@@ -124,3 +131,48 @@ class Logger:
             sys.stdout.flush()
         return sampledLabels, logpropensity, sampledLoss
 
+    def generateLog_SVM(self, dataset, k):
+        numSamples, numFeatures = numpy.shape(dataset.trainFeatures)
+        numLabels = numpy.shape(dataset.trainLabels)[1]
+
+        sampledLabels = dataset.trainLabels.copy()
+        logpropensity = numpy.zeros(numSamples, dtype = numpy.longdouble)
+        if self.svm.labeler is not None:
+            regressor = self.svm.labeler
+            predictedProbabilities = regressor.predict_log_proba(dataset.trainFeatures)
+
+            probSampledLabel = numpy.zeros(numSamples, dtype=numpy.longdouble)
+            probSampledLabel[sampledLabels[:, 0] > 0] = predictedProbabilities[sampledLabels[:, 0] > 0, 1]
+            probSampledLabel[sampledLabels[:, 0] < 1] = predictedProbabilities[sampledLabels[:, 0] < 1, 0]
+            logpropensity = logpropensity + probSampledLabel
+
+
+        x_control = dataset.trainFeatures[:, -1].todense()
+        control_num = ut.compute_imbalance(x_control, dataset.trainLabels, k)
+        actualProb = numpy.exp(predictedProbabilities)
+        prot_neg = numpy.where((x_control == 0.0) & (dataset.trainLabels == 0.0))[0]
+        non_prot_pos = numpy.where((x_control == 1.0) & (dataset.trainLabels == 1.0))[0]
+        prot_low_prob = numpy.argsort(actualProb[prot_neg, 0])[:control_num]
+        non_prot_low_prob = numpy.argsort(actualProb[non_prot_pos, 1])[:control_num]
+
+        sampledLoss = numpy.zeros(numSamples) - 1
+
+        prot_ind = prot_neg[prot_low_prob]
+        non_prot_ind = non_prot_pos[non_prot_low_prob]
+
+        sampledLoss[prot_ind] = 0
+        sampledLoss[non_prot_ind] = 0
+
+
+        # rand = numpy.random.rand(numSamples, 1)
+        # non_prot_ind = numpy.where((x_control == 1.0) & (dataset.trainLabels == 1.0) & (rand < non_prot_prob))[0]
+        # prot_ind = numpy.where((x_control == 0.0) & (dataset.trainLabels == 0.0) & (rand < prot_prob))[0]
+        # sampledLoss[prot_ind] = 0
+        # sampledLoss[non_prot_ind] = 0
+
+        if self.verbose:
+            averageSampledLoss = sampledLoss.mean(dtype = numpy.longdouble)
+            print("Logger: [Message] Sampled historical logs. [Mean train loss, numSamples]:", averageSampledLoss, numpy.shape(sampledLabels)[0])
+            print("Logger: [Message] [min, max, mean] inv propensity", logpropensity.min(), logpropensity.max(), logpropensity.mean())
+            sys.stdout.flush()
+        return sampledLabels, logpropensity, sampledLoss
