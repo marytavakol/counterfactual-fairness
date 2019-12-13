@@ -23,15 +23,16 @@ if __name__ == '__main__':
     Prule = []
     Prule_std = []
 
-    replay_count = 1
+    #replay_count = 1
     k = 0.8
-    for frac in numpy.arange(0.1, 1.1, 0.1):
-    #for k in numpy.arange(0.1, 2.1, 0.1):
-    #for replay_count in range(1,11):
+    frac = 0.2
+    #for frac in numpy.arange(0.1, 1.1, 0.1):
+    #for k in numpy.arange(0.2, 2.1, 0.2):
+    for replay_count in range(1,2):
 
-        #print("----------------------ReplayCount: ", replay_count)
+        print("----------------------ReplayCount: ", replay_count)
         #print("----------------------k: ", k)
-        print("----------------------frac: ", frac)
+        #print("----------------------frac: ", frac)
 
         SCORES = {}
         ACCRCY = {}

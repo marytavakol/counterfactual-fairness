@@ -11,6 +11,7 @@ import sys
 import time
 import utils as ut
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+from sklearn.svm import SVC
 
 
 class Skylines:
@@ -155,7 +156,7 @@ class SVM(Skylines):
         return predictionError, multilabelClassifier, diagnostic, diagnostic
 
     def generatePredictions(self, classifier):
-        return classifier.predict(self.dataset.trainFeatures)
+        return classifier.predict(self.dataset.testFeatures)
 
 
 class CRF(Skylines):
