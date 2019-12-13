@@ -16,6 +16,10 @@ if __name__ == '__main__':
     dataset = DatasetReader.DatasetReader(copy_dataset = None, verbose = False)
     dataset.loadDataset(filename = name)
 
+    ESTIMATORS = ['SelfNormal']
+    VAR = ["SVP"]
+    APPROACHES = list(itertools.product(ESTIMATORS, VAR))
+
     AUCs = []
     AUC_std = []
     ACCs = []
@@ -37,9 +41,6 @@ if __name__ == '__main__':
         SCORES = {}
         ACCRCY = {}
         PRULES = {}
-        ESTIMATORS = ['Vanilla', 'Stochastic', 'SelfNormal']
-        VAR = ["ERM", "SVP"]
-        APPROACHES = list(itertools.product(ESTIMATORS, VAR))
 
         for approach in APPROACHES:
             strApproach = str(approach)

@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import numpy
 
 
-case = "rp"
+case = "sf"
 
 plt.rcParams.update({'font.size': 14})
 plt.figure()
@@ -146,3 +146,4 @@ elif case == "sf":
     plt.ylabel('Performance')
 
     plt.savefig("fraction")
+    #plt.show()
