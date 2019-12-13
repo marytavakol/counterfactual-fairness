@@ -6,10 +6,7 @@ import Skylines
 import Logger
 import itertools
 import numpy
-# from random import seed
-# SEED = 50000
-# seed(SEED) # set the random seed so that the random permutations can be reproduced again
-# numpy.random.seed(SEED)
+
 
 if __name__ == '__main__':
     name = "data/adult-cleaned.dat"
@@ -19,21 +16,27 @@ if __name__ == '__main__':
     dataset = DatasetReader.DatasetReader(copy_dataset = None, verbose = False)
     dataset.loadDataset(filename = name)
 
-    SCORES = {}
-    PRULES = {}
-    ESTIMATORS = ['SelfNormal']
-    VAR = ["SVP"]
-    APPROACHES = list(itertools.product(ESTIMATORS, VAR))
+    AUCs = []
+    AUC_std = []
+    Prule = []
+    Prule_std = []
 
-    for approach in APPROACHES:
-        strApproach = str(approach)
-        SCORES[strApproach] = []
-        PRULES[strApproach] = []
+    for replay_count in range(1,11):
 
-    for replay_count in range(10):
-        replay_count += 1
         print("----------------------ReplayCount: ", replay_count)
-        n_runs = 20
+
+        SCORES = {}
+        PRULES = {}
+        ESTIMATORS = ['SelfNormal']
+        VAR = ["SVP"]
+        APPROACHES = list(itertools.product(ESTIMATORS, VAR))
+
+        for approach in APPROACHES:
+            strApproach = str(approach)
+            SCORES[strApproach] = []
+            PRULES[strApproach] = []
+
+        n_runs = 10
         for run in range(n_runs):
             #print("************************RUN ", run)
 
@@ -55,7 +58,6 @@ if __name__ == '__main__':
             replayed_dataset.trainLabels = labels
 
             sampledLabels, sampledLogPropensity, sampledLoss = logger.generateLog(replayed_dataset)
-            #replayed_dataset.trainFeatures = replayed_dataset.trainFeatures[:, :-1]
 
             bandit_dataset = DatasetReader.BanditDataset(dataset = replayed_dataset, verbose = False)
 
@@ -84,11 +86,10 @@ if __name__ == '__main__':
                 currDataset = bandit_dataset
 
                 #print("MultiLabelExperiment 1: APPROACH ", approach)
-                sys.stdout.flush()
                 model = Skylines.PRMWrapper(currDataset, n_iter = 1000, tol = 1e-6, minC = 0, maxC = -1, minV = minVar, maxV = maxVar,
                                         minClip = 0, maxClip = 0, estimator_type = approach[0], verbose = False, parallel=None, smartStart=coef)
                 model.calibrateHyperParams()
-                #print("Validation results: ")
+
                 model.validate()
                 # evaluation
                 result = model.test()
@@ -104,11 +105,28 @@ if __name__ == '__main__':
             del bandit_dataset
 
         for approach in APPROACHES:
-            #print("Approach: ", approach)
-            print("Average AUC: ", numpy.mean(SCORES[str(approach)]))
-            print("STD-Error AUC: ", numpy.std(SCORES[str(approach)])/numpy.sqrt(n_runs))
-            print("Average P-rule: ", numpy.mean(PRULES[str(approach)]))
-            print("STD-Error P-rule: ", numpy.std(PRULES[str(approach)])/numpy.sqrt(n_runs))
+            #print(SCORES[str(approach)])
+            #print(PRULES[str(approach)])
+            auc = numpy.mean(SCORES[str(approach)])
+            AUCs.append(auc)
+            print("Average AUC: ", auc)
+            auc_std = numpy.std(SCORES[str(approach)])/numpy.sqrt(n_runs)
+            AUC_std.append(auc_std)
+            print("STD-Error AUC: ", auc_std)
+            prule = numpy.mean(PRULES[str(approach)])
+            Prule.append(prule)
+            print("Average P-rule: ", prule)
+            prule_std = numpy.std(PRULES[str(approach)])/numpy.sqrt(n_runs)
+            Prule_std.append(prule_std)
+            print("STD-Error P-rule: ", prule_std)
+
+
+    print("--------------------------------------------")
+    print("auc = ", AUCs)
+    print("auc_std = ", AUC_std)
+    print("prule = ", Prule)
+    print("prule_std = ", Prule_std)
+
     dataset.freeAuxiliaryMatrices()
     del dataset
 

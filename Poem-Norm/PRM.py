@@ -208,7 +208,8 @@ class MultiLabelEstimator(PRMEstimator):
         pval = ut.compute_p_rule(X[:, -1].todense(), predictedLabels)
         #print("P-rule: ", pval)
 
-        error = 2 - auc - pval
+        #error = 2 - auc - pval
+        error = 1 - auc
         #print("Error", error)
 
         return error
