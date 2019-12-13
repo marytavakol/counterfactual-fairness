@@ -283,7 +283,7 @@ def compute_imbalance(x_control, class_labels, k):
     #prot_prob = magic_num / prot_all
     #non_prot_prob = magic_num/non_prot_pos
 
-    return int(magic_num/k) #prot_prob[0], non_prot_prob[0]
+    return int(magic_num * k) #prot_prob[0], non_prot_prob[0]
 
 
 

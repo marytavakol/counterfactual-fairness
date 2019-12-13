@@ -24,7 +24,7 @@ if __name__ == '__main__':
     Prule_std = []
 
     replay_count = 1
-    for k in range(1,11):
+    for k in numpy.arange(0.1, 2.1, 0.1):
     #for replay_count in range(1,11):
 
         #print("----------------------ReplayCount: ", replay_count)
