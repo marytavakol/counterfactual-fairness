@@ -18,14 +18,20 @@ if __name__ == '__main__':
 
     AUCs = []
     AUC_std = []
+    ACCs = []
+    ACC_std = []
     Prule = []
     Prule_std = []
 
-    for replay_count in range(1,11):
+    replay_count = 1
+    for k in range(1,11):
+    #for replay_count in range(1,11):
 
-        print("----------------------ReplayCount: ", replay_count)
+        #print("----------------------ReplayCount: ", replay_count)
+        print("----------------------k: ", k)
 
         SCORES = {}
+        ACCRCY = {}
         PRULES = {}
         ESTIMATORS = ['SelfNormal']
         VAR = ["SVP"]
@@ -34,6 +40,7 @@ if __name__ == '__main__':
         for approach in APPROACHES:
             strApproach = str(approach)
             SCORES[strApproach] = []
+            ACCRCY[strApproach] = []
             PRULES[strApproach] = []
 
         n_runs = 10
@@ -47,7 +54,7 @@ if __name__ == '__main__':
             subsampled_dataset.trainFeatures = features
             subsampled_dataset.trainLabels = labels
             logger = Logger.Logger(subsampled_dataset, loggerC = -1, stochasticMultiplier = 1, verbose = False)
-            test_score, p_rule = logger.crf.test()
+            test_score = logger.crf.test()
             #print("logger performance: ", test_score)
             #print("P-ruls is: ", p_rule)
 
@@ -57,7 +64,7 @@ if __name__ == '__main__':
             replayed_dataset.trainFeatures = features
             replayed_dataset.trainLabels = labels
 
-            sampledLabels, sampledLogPropensity, sampledLoss = logger.generateLog(replayed_dataset)
+            sampledLabels, sampledLogPropensity, sampledLoss = logger.generateLog(replayed_dataset, k)
 
             bandit_dataset = DatasetReader.BanditDataset(dataset = replayed_dataset, verbose = False)
 
@@ -97,6 +104,7 @@ if __name__ == '__main__':
                 #print("P-rule: ", result[1])
                 SCORES[strApproach].append(result[0])
                 PRULES[strApproach].append(result[1])
+                ACCRCY[strApproach].append(result[2])
 
                 model.freeAuxiliaryMatrices()
                 del model
@@ -113,6 +121,14 @@ if __name__ == '__main__':
             auc_std = numpy.std(SCORES[str(approach)])/numpy.sqrt(n_runs)
             AUC_std.append(auc_std)
             print("STD-Error AUC: ", auc_std)
+
+            acc = numpy.mean(ACCRCY[str(approach)])
+            ACCs.append(acc)
+            print("Average ACC: ", acc)
+            acc_std = numpy.std(ACCRCY[str(approach)]) / numpy.sqrt(n_runs)
+            ACC_std.append(acc_std)
+            print("STD-Error ACC: ", acc_std)
+
             prule = numpy.mean(PRULES[str(approach)])
             Prule.append(prule)
             print("Average P-rule: ", prule)
@@ -124,6 +140,8 @@ if __name__ == '__main__':
     print("--------------------------------------------")
     print("auc = ", AUCs)
     print("auc_std = ", AUC_std)
+    print("acc = ", ACCs)
+    print("acc_std = ", ACC_std)
     print("prule = ", Prule)
     print("prule_std = ", Prule_std)
 

@@ -271,7 +271,7 @@ def compute_p_rule(x_control, class_labels):
     #print("P-rule is: %0.0f%%" % ( p_rule ))
     return p_rule
 
-def compute_imbalance(x_control, class_labels):
+def compute_imbalance(x_control, class_labels, k):
 
     """ Compute the p-rule based on Doctrine of disparate impact """
 
@@ -283,7 +283,7 @@ def compute_imbalance(x_control, class_labels):
     #prot_prob = magic_num / prot_all
     #non_prot_prob = magic_num/non_prot_pos
 
-    return int(magic_num) #prot_prob[0], non_prot_prob[0]
+    return int(magic_num/k) #prot_prob[0], non_prot_prob[0]
 
 
 

@@ -77,7 +77,7 @@ class Logger:
 
 
 
-    def generateLog(self, dataset):
+    def generateLog(self, dataset, k):
         numSamples, numFeatures = numpy.shape(dataset.trainFeatures)
         numLabels = numpy.shape(dataset.trainLabels)[1]
 
@@ -95,7 +95,7 @@ class Logger:
 
 
         x_control = dataset.trainFeatures[:, -1].todense()
-        control_num = ut.compute_imbalance(x_control, dataset.trainLabels)
+        control_num = ut.compute_imbalance(x_control, dataset.trainLabels, k)
         actualProb = numpy.exp(predictedProbabilities)
         prot_neg = numpy.where((x_control == 0.0) & (dataset.trainLabels == 0.0))[0]
         non_prot_pos = numpy.where((x_control == 1.0) & (dataset.trainLabels == 1.0))[0]

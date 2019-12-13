@@ -88,7 +88,7 @@ class Skylines:
 
     def test(self):
         predictedLabels = self.generatePredictions(self.labeler)
-        #acc = accuracy_score(self.dataset.testLabels, predictedLabels)
+        acc = accuracy_score(self.dataset.testLabels, predictedLabels)
         #f1 = f1_score(self.dataset.testLabels, predictedLabels)
         auc = roc_auc_score(self.dataset.testLabels, predictedLabels)
         #print("Accuracy: ", acc)
@@ -96,7 +96,7 @@ class Skylines:
         #print("AUC: ", auc)
         p_rule = ut.compute_p_rule(self.dataset.testFeatures[:, -1].todense(), predictedLabels)
 
-        return auc, p_rule
+        return auc, p_rule, acc
 
     def expectedTestLoss(self):
         predictionError = None
