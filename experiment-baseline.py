@@ -28,49 +28,91 @@ def test_adult_data(name):
     sensitive_attrs_to_cov_thresh = {}
     gamma = None
 
+    mode = 3
+
+
     def train_test_classifier():
         w = ut.train_model(x_train, y_train, x_control_train, loss_function, apply_fairness_constraints, apply_accuracy_constraint, sep_constraint, sensitive_attrs_to_cov_thresh, gamma)
         result = ut.test(w, x_test, y_test, x_control_test)
 
         return result
 
-    """ Classify the data while optimizing for accuracy """
-    print("== Unconstrained (original) classifier ==")
-    # all constraint flags are set to 0 since we want to train an unconstrained (original) classifier
-    apply_fairness_constraints = 0
-    apply_accuracy_constraint = 0
-    sep_constraint = 0
-    results = train_test_classifier()
-    print(results)
+    AUC = []
+    Fair = []
+    n_runs = 10
 
-    """ Now classify such that we optimize for accuracy while achieving perfect fairness """
-    apply_fairness_constraints = 1  # set this flag to one since we want to optimize accuracy subject to fairness constraints
-    apply_accuracy_constraint = 0
-    sep_constraint = 0
-    print("== Classifier with fairness constraint ==")
-    results = train_test_classifier()
-    print(results)
+    if mode == 1:
 
-    """ Classify such that we optimize for fairness subject to a certain loss in accuracy """
-    apply_fairness_constraints = 0  # flag for fairness constraint is set back to0 since we want to apply the accuracy constraint now
-    apply_accuracy_constraint = 1  # now, we want to optimize fairness subject to accuracy constraints
-    sep_constraint = 0
-    gamma = 0.5  # gamma controls how much loss in accuracy we are willing to incur to achieve fairness -- increase gamme to allow more loss in accuracy
-    print("== Classifier with accuracy constraint ==")
-    results = train_test_classifier()
-    print(results)
+        for run in range(n_runs):
 
-    """ 
-    Classify such that we optimize for fairness subject to a certain loss in accuracy 
-    In addition, make sure that no points classified as positive by the unconstrained (original) classifier are misclassified.
-    """
-    apply_fairness_constraints = 0  # flag for fairness constraint is set back to0 since we want to apply the accuracy constraint now
-    apply_accuracy_constraint = 1  # now, we want to optimize accuracy subject to fairness constraints
-    sep_constraint = 1  # set the separate constraint flag to one, since in addition to accuracy constrains, we also want no misclassifications for certain points (details in demo README.md)
-    gamma = 1000.0
-    print("== Classifier with accuracy constraint (no +ve misclassification) ==")
-    results = train_test_classifier()
-    print(results)
+            """ Classify the data while optimizing for accuracy """
+            print("== Unconstrained (original) classifier ==")
+            # all constraint flags are set to 0 since we want to train an unconstrained (original) classifier
+            apply_fairness_constraints = 0
+            apply_accuracy_constraint = 0
+            sep_constraint = 0
+            results = train_test_classifier()
+            AUC.append(results[0])
+            Fair.append(results[1])
+
+        print("Average AUC: ", np.mean(AUC))
+        print("STD-Error AUC: ", np.std(AUC) / np.sqrt(n_runs))
+
+        print("Average P-rule: ", np.mean(Fair))
+        print("STD-Error P-rule: ", np.std(Fair) / np.sqrt(n_runs))
+
+    elif mode == 2:
+
+        apply_fairness_constraints = 1  # set this flag to one since we want to optimize accuracy subject to fairness constraints
+        apply_accuracy_constraint = 0
+        sep_constraint = 0
+        print("== Classifier with fairness constraint ==")
+
+        for run in range(n_runs):
+            results = train_test_classifier()
+            AUC.append(results[0])
+            Fair.append(results[1])
+
+        print("Average AUC: ", np.mean(AUC))
+        print("STD-Error AUC: ", np.std(AUC) / np.sqrt(n_runs))
+
+        print("Average P-rule: ", np.mean(Fair))
+        print("STD-Error P-rule: ", np.std(Fair) / np.sqrt(n_runs))
+
+    elif mode == 3:
+
+        apply_fairness_constraints = 0  # flag for fairness constraint is set back to0 since we want to apply the accuracy constraint now
+        apply_accuracy_constraint = 1  # now, we want to optimize fairness subject to accuracy constraints
+        sep_constraint = 0
+
+        #gamma = 0.5  # gamma controls how much loss in accuracy we are willing to incur to achieve fairness -- increase gamme to allow more loss in accuracy
+        for gamma in np.arange(0.5, 4.5, 0.5):
+            print("== Classifier with accuracy constraint == gamma", gamma)
+
+            AUC = []
+            Fair = []
+            for run in range(n_runs):
+                results = train_test_classifier()
+                AUC.append(results[0])
+                Fair.append(results[1])
+
+            print("Average AUC: ", np.mean(AUC))
+            print("STD-Error AUC: ", np.std(AUC) / np.sqrt(n_runs))
+
+            print("Average P-rule: ", np.mean(Fair))
+            print("STD-Error P-rule: ", np.std(Fair) / np.sqrt(n_runs))
+
+    # """
+    # Classify such that we optimize for fairness subject to a certain loss in accuracy
+    # In addition, make sure that no points classified as positive by the unconstrained (original) classifier are misclassified.
+    # """
+    # apply_fairness_constraints = 0  # flag for fairness constraint is set back to0 since we want to apply the accuracy constraint now
+    # apply_accuracy_constraint = 1  # now, we want to optimize accuracy subject to fairness constraints
+    # sep_constraint = 1  # set the separate constraint flag to one, since in addition to accuracy constrains, we also want no misclassifications for certain points (details in demo README.md)
+    # gamma = 1000.0
+    # print("== Classifier with accuracy constraint (no +ve misclassification) ==")
+    # results = train_test_classifier()
+    # print(results)
 
     return
 
