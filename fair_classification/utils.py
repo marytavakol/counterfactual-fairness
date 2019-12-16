@@ -7,16 +7,13 @@ from collections import defaultdict
 from copy import deepcopy
 import matplotlib.pyplot as plt # for plotting stuff
 import sys
-from sklearn.metrics import accuracy_score
-
-# SEED = 1122334455
-# seed(SEED) # set the random seed so that the random permutations can be reproduced again
-# np.random.seed(SEED)
+from sklearn.metrics import accuracy_score, roc_auc_score
 
 
 
 
-def train_model(x, y, x_control, loss_function, apply_fairness_constraints, apply_accuracy_constraint, sep_constraint, sensitive_attrs, sensitive_attrs_to_cov_thresh, gamma=None):
+
+def train_model(x, y, x_control, loss_function, apply_fairness_constraints, apply_accuracy_constraint, sep_constraint, sensitive_attrs_to_cov_thresh, gamma=None):
 
     """
 
@@ -58,7 +55,7 @@ def train_model(x, y, x_control, loss_function, apply_fairness_constraints, appl
     if apply_fairness_constraints == 0:
         constraints = []
     else:
-        constraints = get_constraint_list_cov(x, y, x_control, sensitive_attrs, sensitive_attrs_to_cov_thresh)      
+        constraints = get_constraint_list_cov(x, y, x_control, sensitive_attrs_to_cov_thresh)
 
     if apply_accuracy_constraint == 0: #its not the reverse problem, just train w with cross cov constraints
 
@@ -105,7 +102,7 @@ def train_model(x, y, x_control, loss_function, apply_fairness_constraints, appl
 
         if sep_constraint == True: # separate gemma for different people
             for i in range(0, len(predicted_labels)):
-                if predicted_labels[i] == 1.0 and x_control[sensitive_attrs[0]][i] == 1.0: # for now we are assuming just one sensitive attr for reverse constraint, later, extend the code to take into account multiple sensitive attrs
+                if predicted_labels[i] == 1.0 and x_control[i] == 1.0: # for now we are assuming just one sensitive attr for reverse constraint, later, extend the code to take into account multiple sensitive attrs
                     c = ({'type': 'ineq', 'fun': constraint_protected_people, 'args':(x[i], y[i])}) # this constraint makes sure that these people stay in the positive class even in the modified classifier             
                     constraints.append(c)
                 else:
@@ -122,7 +119,7 @@ def train_model(x, y, x_control, loss_function, apply_fairness_constraints, appl
 
         w = minimize(fun = cross_cov_abs_optm_func,
             x0 = old_w,
-            args = (x, x_control[sensitive_attrs[0]]),
+            args = (x, x_control),
             method = 'SLSQP',
             options = {"maxiter":100000},
             constraints = constraints)
@@ -387,6 +384,19 @@ def check_accuracy(model, x_train, y_train, x_test, y_test, y_train_predicted, y
 
     return train_score, test_score, correct_answers_train, correct_answers_test
 
+def test(model, x_test, y_test, x_control_test):
+
+    predictedLabels = np.sign(np.dot(x_test, model))
+
+    acc = accuracy_score(y_test, predictedLabels)
+    auc = roc_auc_score(y_test, predictedLabels)
+    p_rule = compute_p_rule(x_control_test, predictedLabels)
+    print("Accuracy: ", acc)
+    print("AUC: ", auc)
+    print("P-rule: ", p_rule)
+
+    return auc, p_rule, acc
+
 def test_sensitive_attr_constraint_cov(model, x_arr, y_arr_dist_boundary, x_control, thresh, verbose):
 
     
@@ -429,7 +439,7 @@ def test_sensitive_attr_constraint_cov(model, x_arr, y_arr_dist_boundary, x_cont
         print()
     return ans
 
-def print_covariance_sensitive_attrs(model, x_arr, y_arr_dist_boundary, x_control, sensitive_attrs):
+def print_covariance_sensitive_attrs(model, x_arr, y_arr_dist_boundary, x_control):
 
 
     """
@@ -473,7 +483,7 @@ def print_covariance_sensitive_attrs(model, x_arr, y_arr_dist_boundary, x_contro
     return sensitive_attrs_to_cov_original
 
 
-def get_correlations(model, x_test, y_predicted, x_control_test, sensitive_attrs):
+def get_correlations(model, x_test, y_predicted, x_control_test):
     
 
     """
@@ -525,7 +535,7 @@ def get_correlations(model, x_test, y_predicted, x_control_test, sensitive_attrs
 
 
 
-def get_constraint_list_cov(x_train, y_train, x_control_train, sensitive_attrs, sensitive_attrs_to_cov_thresh):
+def get_constraint_list_cov(x_train, y_train, x_control_train, sensitive_attrs_to_cov_thresh):
 
     """
     get the list of constraints to be fed to the minimizer
@@ -534,26 +544,25 @@ def get_constraint_list_cov(x_train, y_train, x_control_train, sensitive_attrs, 
     constraints = []
 
 
-    for attr in sensitive_attrs:
+    attr_arr = x_control_train
+    #attr_arr_transformed, index_dict = get_one_hot_encoding(attr_arr)
+    attr_arr_transformed = attr_arr
+    index_dict = None
+
+    if index_dict is None: # binary attribute
+        thresh = 0
+        c = ({'type': 'ineq', 'fun': test_sensitive_attr_constraint_cov, 'args':(x_train, y_train, attr_arr_transformed,thresh, False)})
+        constraints.append(c)
+    else: # otherwise, its a categorical attribute, so we need to set the cov thresh for each value separately
 
 
-        attr_arr = x_control_train[attr]
-        attr_arr_transformed, index_dict = get_one_hot_encoding(attr_arr)
-                
-        if index_dict is None: # binary attribute
-            thresh = sensitive_attrs_to_cov_thresh[attr]
-            c = ({'type': 'ineq', 'fun': test_sensitive_attr_constraint_cov, 'args':(x_train, y_train, attr_arr_transformed,thresh, False)})
+        for attr_val, ind in index_dict.items():
+            attr_name = attr_val
+            thresh = 0
+
+            t = attr_arr_transformed[:,ind]
+            c = ({'type': 'ineq', 'fun': test_sensitive_attr_constraint_cov, 'args':(x_train, y_train, t ,thresh, False)})
             constraints.append(c)
-        else: # otherwise, its a categorical attribute, so we need to set the cov thresh for each value separately
-
-
-            for attr_val, ind in index_dict.items():
-                attr_name = attr_val                
-                thresh = sensitive_attrs_to_cov_thresh[attr][attr_name]
-                
-                t = attr_arr_transformed[:,ind]
-                c = ({'type': 'ineq', 'fun': test_sensitive_attr_constraint_cov, 'args':(x_train, y_train, t ,thresh, False)})
-                constraints.append(c)
 
 
     return constraints
