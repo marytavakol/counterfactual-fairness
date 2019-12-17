@@ -78,24 +78,25 @@ def test_adult_data(name):
         apply_accuracy_constraint = 1  # now, we want to optimize fairness subject to accuracy constraints
         sep_constraint = 0
 
-        for gamma in np.arange(0, 1.1, 0.1):
-            print("== Classifier with accuracy constraint == gamma", gamma)
+        #for gamma in np.arange(0, 1.1, 0.1):
+        gamma = 0.15
+        print("== Classifier with accuracy constraint == gamma", gamma)
 
-            AUC = []
-            Fair = []
-            for run in range(n_runs):
+        AUC = []
+        Fair = []
+        for run in range(n_runs):
 
-                train_data, test_data = train_test_split(all_data, shuffle=True, test_size=0.3)
-                x_train = train_data[:, :-2]
-                x_control_train = train_data[:, -2]
-                y_train = train_data[:, -1]
-                x_test = test_data[:, :-2]
-                x_control_test = test_data[:, -2]
-                y_test = test_data[:, -1]
+            train_data, test_data = train_test_split(all_data, shuffle=True, test_size=0.3)
+            x_train = train_data[:, :-2]
+            x_control_train = train_data[:, -2]
+            y_train = train_data[:, -1]
+            x_test = test_data[:, :-2]
+            x_control_test = test_data[:, -2]
+            y_test = test_data[:, -1]
 
-                results = train_test_classifier()
-                AUC.append(results[0])
-                Fair.append(results[1])
+            results = train_test_classifier()
+            AUC.append(results[0])
+            Fair.append(results[1])
 
             print("Average AUC: ", np.mean(AUC))
             print("STD-Error AUC: ", np.std(AUC) / np.sqrt(n_runs))
