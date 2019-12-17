@@ -392,10 +392,10 @@ def test(model, x_test, y_test, x_control_test):
     auc = roc_auc_score(y_test, predictedLabels)
     p_rule = compute_p_rule(x_control_test, predictedLabels)
     #print("Accuracy: ", acc)
-    print("AUC: ", auc)
-    print("P-rule: ", p_rule)
+    #print("AUC: ", auc)
+    #print("P-rule: ", p_rule)
 
-    return auc, p_rule#, acc
+    return auc, p_rule, acc
 
 def test_sensitive_attr_constraint_cov(model, x_arr, y_arr_dist_boundary, x_control, thresh, verbose):
 

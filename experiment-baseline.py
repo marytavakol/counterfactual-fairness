@@ -1,4 +1,4 @@
-import os, sys
+import sys
 import numpy as np
 from sklearn.model_selection import train_test_split
 
@@ -11,14 +11,6 @@ def test_adult_data(name):
     """ Load the adult data """
     all_data = np.loadtxt(name)
     all_data = ut.add_intercept(all_data)
-    train_data, test_data = train_test_split(all_data, shuffle=True, test_size=0.3)
-    x_train = train_data[:, :-2]
-    x_control_train = train_data[:, -2]
-    y_train = train_data[:, -1]
-    x_test = test_data[:, :-2]
-    x_control_test = test_data[:, -2]
-    y_test = test_data[:, -1]
-
 
     apply_fairness_constraints = None
     apply_accuracy_constraint = None
@@ -30,11 +22,9 @@ def test_adult_data(name):
 
     mode = 3
 
-
     def train_test_classifier():
         w = ut.train_model(x_train, y_train, x_control_train, loss_function, apply_fairness_constraints, apply_accuracy_constraint, sep_constraint, sensitive_attrs_to_cov_thresh, gamma)
         result = ut.test(w, x_test, y_test, x_control_test)
-
         return result
 
     AUC = []
@@ -43,14 +33,14 @@ def test_adult_data(name):
 
     if mode == 1:
 
-        for run in range(n_runs):
+        """ Classify the data while optimizing for accuracy """
+        print("== Unconstrained (original) classifier ==")
+        # all constraint flags are set to 0 since we want to train an unconstrained (original) classifier
+        apply_fairness_constraints = 0
+        apply_accuracy_constraint = 0
+        sep_constraint = 0
 
-            """ Classify the data while optimizing for accuracy """
-            print("== Unconstrained (original) classifier ==")
-            # all constraint flags are set to 0 since we want to train an unconstrained (original) classifier
-            apply_fairness_constraints = 0
-            apply_accuracy_constraint = 0
-            sep_constraint = 0
+        for run in range(n_runs):
             results = train_test_classifier()
             AUC.append(results[0])
             Fair.append(results[1])
@@ -69,15 +59,18 @@ def test_adult_data(name):
         print("== Classifier with fairness constraint ==")
 
         for run in range(n_runs):
+
+            train_data, test_data = train_test_split(all_data, shuffle=True, test_size=0.3)
+            x_train = train_data[:, :-2]
+            x_control_train = train_data[:, -2]
+            y_train = train_data[:, -1]
+            x_test = test_data[:, :-2]
+            x_control_test = test_data[:, -2]
+            y_test = test_data[:, -1]
+
             results = train_test_classifier()
             AUC.append(results[0])
             Fair.append(results[1])
-
-        print("Average AUC: ", np.mean(AUC))
-        print("STD-Error AUC: ", np.std(AUC) / np.sqrt(n_runs))
-
-        print("Average P-rule: ", np.mean(Fair))
-        print("STD-Error P-rule: ", np.std(Fair) / np.sqrt(n_runs))
 
     elif mode == 3:
 
@@ -85,13 +78,21 @@ def test_adult_data(name):
         apply_accuracy_constraint = 1  # now, we want to optimize fairness subject to accuracy constraints
         sep_constraint = 0
 
-        #gamma = 0.5  # gamma controls how much loss in accuracy we are willing to incur to achieve fairness -- increase gamme to allow more loss in accuracy
-        for gamma in np.arange(0.5, 4.5, 0.5):
+        for gamma in np.arange(0, 1.1, 0.1):
             print("== Classifier with accuracy constraint == gamma", gamma)
 
             AUC = []
             Fair = []
             for run in range(n_runs):
+
+                train_data, test_data = train_test_split(all_data, shuffle=True, test_size=0.3)
+                x_train = train_data[:, :-2]
+                x_control_train = train_data[:, -2]
+                y_train = train_data[:, -1]
+                x_test = test_data[:, :-2]
+                x_control_test = test_data[:, -2]
+                y_test = test_data[:, -1]
+
                 results = train_test_classifier()
                 AUC.append(results[0])
                 Fair.append(results[1])
